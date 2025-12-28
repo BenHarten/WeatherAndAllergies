@@ -1,11 +1,18 @@
 // ============ KONFIGURATION ============
 // Alle APIs sind kostenlos und benötigen keinen API-Schlüssel
 let isLoading = false; // Debounce flag
+let currentForecastDays = 7; // Track how many days are currently loaded
+let currentForecastLat = null; // Store current forecast location
+let currentForecastLon = null;
 
 // ============ EVENT LISTENER ============
 const el = id => document.getElementById(id);
 el('searchBtn').addEventListener('click', onSearch);
 el('geoBtn').addEventListener('click', useGeolocation);
+el('weatherCard').addEventListener('click', () => showForecast(currentForecastLat, currentForecastLon));
+el('forecastClose').addEventListener('click', closeForecast);
+el('forecastLoadMore').addEventListener('click', loadMoreForecastDays);
+window.addEventListener('keydown', e => { if(e.key === 'Escape') closeForecast(); });
 
 // ============ SEARCH & GEO ============
 async function onSearch(){
@@ -34,6 +41,11 @@ async function onSearch(){
 }
 
 async function useGeolocation(){
+  if(isLoading) return;
+  await requestAndLoadLocation();
+}
+
+async function requestAndLoadLocation(){
   if(isLoading) return; // Prevent duplicate requests
   isLoading = true;
   el('geoBtn').disabled = true;
@@ -78,6 +90,10 @@ async function geocode(q){
 
 // ============ MAIN LOADER ============
 async function loadForLocation(lat, lon, label){
+  // Store for forecast modal
+  currentForecastLat = lat;
+  currentForecastLon = lon;
+  
   el('weatherContent').innerHTML = `<p class="muted">Lade Wetter für ${label}…</p>`;
   el('allergyContent').innerHTML = `<p class="muted">Lade Polleninformationen…</p>`;
 
@@ -203,5 +219,98 @@ function renderAllergy(pollen){
   `;
 }
 
-// Optional: start with a demo location
-// loadForLocation(52.52, 13.405, 'Berlin (Demo)');
+// ============ AUTO-LOAD ON PAGE LOAD ============
+// Versuche, den Standort automatisch beim Laden zu ermitteln
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      loadForLocation(pos.coords.latitude, pos.coords.longitude, 'Aktueller Standort');
+    },
+    () => {
+      // Fallback: wenn Geolocation verweigert, zeige Demo-Ort
+      loadForLocation(52.52, 13.405, 'Berlin (Demo)');
+    }
+  );
+} else {
+  // Fallback: wenn Geolocation nicht verfügbar
+  loadForLocation(52.52, 13.405, 'Berlin (Demo)');
+}
+
+// ============ FORECAST FUNCTIONS ============
+async function showForecast(lat, lon){
+  if(!lat || !lon) return;
+  currentForecastDays = 7;
+  currentForecastLat = lat;
+  currentForecastLon = lon;
+  
+  el('forecastModal').style.display = 'flex';
+  el('forecastGrid').innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center">Lade Vorhersage…</p>';
+  
+  await renderForecastDays(lat, lon, 7);
+}
+
+function closeForecast(){
+  el('forecastModal').style.display = 'none';
+}
+
+async function loadMoreForecastDays(){
+  const newDays = Math.min(currentForecastDays + 7, 16); // API max is 16 days
+  if(newDays === currentForecastDays) return; // Already at max
+  
+  currentForecastDays = newDays;
+  el('forecastLoadMore').disabled = true;
+  await renderForecastDays(currentForecastLat, currentForecastLon, newDays);
+  el('forecastLoadMore').disabled = false;
+  
+  if(currentForecastDays >= 16){
+    el('forecastLoadMore').disabled = true;
+    el('forecastLoadMore').textContent = 'Maximale Tage erreicht (16)';
+  }
+}
+
+async function renderForecastDays(lat, lon, days){
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=${days}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('forecast failed');
+    const data = await res.json();
+    
+    const html = data.daily.time.map((date, i) => {
+      const code = data.daily.weather_code[i];
+      const desc = getWeatherDescription(code);
+      const max = Math.round(data.daily.temperature_2m_max[i]);
+      const min = Math.round(data.daily.temperature_2m_min[i]);
+      const dateObj = new Date(date);
+      const dayName = dateObj.toLocaleDateString('de-DE', {weekday:'long'});
+      const dayDate = dateObj.toLocaleDateString('de-DE', {month:'numeric', day:'numeric'});
+      
+      return `
+        <div class="forecast-day">
+          <div class="forecast-day-left">
+            <div class="forecast-day-date">${dayName} · ${dayDate}</div>
+            <div class="forecast-day-desc">${desc}</div>
+          </div>
+          <div class="forecast-day-right">
+            <div class="forecast-day-temp">
+              <div class="forecast-day-max">↑ ${max}°</div>
+              <div class="forecast-day-min">↓ ${min}°</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    el('forecastGrid').innerHTML = html;
+    
+    // Update load more button
+    if(days >= 16){
+      el('forecastLoadMore').disabled = true;
+      el('forecastLoadMore').textContent = 'Maximale Tage erreicht (16)';
+    } else {
+      el('forecastLoadMore').disabled = false;
+      el('forecastLoadMore').textContent = `Weitere Tage laden (+${Math.min(7, 16 - days)})`;
+    }
+  }catch(e){
+    el('forecastGrid').innerHTML = '<p class="muted" style="padding:20px;text-align:center">Vorhersage konnte nicht geladen werden</p>';
+  }
+}

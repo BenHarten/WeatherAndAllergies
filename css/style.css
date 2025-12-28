@@ -26,6 +26,31 @@ button:active{opacity:0.85}
 .meta{color:var(--muted);font-size:14px}
 .footer{margin-top:22px;color:var(--muted);text-align:center;font-size:12px}
 
+/* Forecast Modal */
+.forecast-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.forecast-modal-content{background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(11,61,145,0.95));border:1px solid rgba(255,255,255,0.1);border-radius:20px;backdrop-filter:blur(12px);max-width:900px;width:100%;max-height:80vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.forecast-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.forecast-header h2{margin:0;font-size:24px;color:#e6eef8}
+.forecast-close{background:0;border:0;color:#b6c2d8;font-size:32px;cursor:pointer;padding:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;transition:color 0.2s}
+.forecast-close:hover{color:#e6eef8}
+.forecast-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.forecast-day{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;transition:all 0.2s}
+.forecast-day:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2)}
+.forecast-day-left{display:flex;flex-direction:column;gap:4px;flex:1}
+.forecast-day-date{font-weight:600;color:#7dd3fc;font-size:16px}
+.forecast-day-desc{color:#b6c2d8;font-size:14px}
+.forecast-day-right{display:flex;gap:20px;align-items:center}
+.forecast-day-temp{display:flex;gap:16px;font-size:16px}
+.forecast-day-max{color:#f87171;font-weight:600}
+.forecast-day-min{color:#60a5fa}
+.forecast-footer{display:flex;justify-content:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)}
+.forecast-load-more{background:linear-gradient(90deg,#7dd3fc,#60a5fa);border:0;color:#072030;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:500;transition:all 0.2s}
+.forecast-load-more:hover{opacity:0.9;transform:translateY(-2px)}
+.forecast-load-more:disabled{opacity:0.5;cursor:not-allowed}
+
+.card{cursor:pointer}
+.card:hover{transform:translateY(-2px)}
+
 @media (max-width:768px){
   .container{padding:16px}
   .site-header h1{font-size:24px}

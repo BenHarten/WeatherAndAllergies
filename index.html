@@ -42,6 +42,20 @@
     <footer class="footer">
       <small>Bereitgestellt für GitHub Pages · Datenquellen: Open-Meteo</small>
     </footer>
+
+    <!-- Forecast Modal -->
+    <div id="forecastModal" class="forecast-modal" style="display:none;">
+      <div class="forecast-modal-content">
+        <div class="forecast-header">
+          <h2 id="forecastTitle">Vorhersage</h2>
+          <button id="forecastClose" class="forecast-close">&times;</button>
+        </div>
+        <div id="forecastGrid" class="forecast-grid"></div>
+        <div class="forecast-footer">
+          <button id="forecastLoadMore" class="forecast-load-more">Weitere Tage laden</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script src="js/app.js"></script>
