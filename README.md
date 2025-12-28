@@ -25,11 +25,26 @@ git push origin main
 
 ### 3. GitHub Pages aktivieren
 
-1. Gehe in die Repository-Einstellungen → **Pages**
-2. Wähle Branch: `main` (oder `gh-pages` falls vorhanden)
-3. Wähle Ordner: `/root`
-4. **Save** klicken
-5. Nach ~1–2 Minuten ist die Seite unter `https://<username>.github.io/<repo-name>/` live
+1. Pushe deinen Code zu GitHub:
+   ```bash
+   git add .
+   git commit -m "Add weather and allergy site"
+   git push origin main
+   ```
+
+2. In deinem GitHub Repository gehe zu **Settings** → **Pages**
+
+3. Stelle folgendes ein:
+   - **Source**: `Deploy from a branch`
+   - **Branch**: `main` 
+   - **Folder**: `/ (root)`
+   - Klicke **Save**
+
+4. Nach ~1–2 Minuten sollte die Seite live sein unter:
+   ```
+   https://<username>.github.io/<repo-name>/
+   ```
+   (Beispiel: `https://max.github.io/WeatherAndAllergies/`)
 
 ## Lokales Testen
 

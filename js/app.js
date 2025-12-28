@@ -1,3 +1,7 @@
+// ============ KONFIGURATION ============
+// Alle APIs sind kostenlos und benötigen keinen API-Schlüssel
+let isLoading = false; // Debounce flag
+
 // ============ EVENT LISTENER ============
 const el = id => document.getElementById(id);
 el('searchBtn').addEventListener('click', onSearch);
@@ -5,18 +9,55 @@ el('geoBtn').addEventListener('click', useGeolocation);
 
 // ============ SEARCH & GEO ============
 async function onSearch(){
+  if(isLoading) return; // Prevent duplicate requests
   const q = el('placeInput').value.trim();
   if(!q) return;
+  
+  isLoading = true;
+  el('searchBtn').disabled = true;
+  el('searchBtn').style.opacity = '0.6';
+  
   const loc = await geocode(q);
-  if(!loc) return showError('Ort nicht gefunden');
+  if(!loc) {
+    showError('Ort nicht gefunden');
+    isLoading = false;
+    el('searchBtn').disabled = false;
+    el('searchBtn').style.opacity = '1';
+    return;
+  }
+  
   await loadForLocation(loc.lat, loc.lon, loc.display_name);
+  
+  isLoading = false;
+  el('searchBtn').disabled = false;
+  el('searchBtn').style.opacity = '1';
 }
 
 async function useGeolocation(){
-  if(!navigator.geolocation) return showError('Geolocation nicht verfügbar');
+  if(isLoading) return; // Prevent duplicate requests
+  isLoading = true;
+  el('geoBtn').disabled = true;
+  el('geoBtn').style.opacity = '0.6';
+  
+  if(!navigator.geolocation) {
+    showError('Geolocation nicht verfügbar');
+    isLoading = false;
+    el('geoBtn').disabled = false;
+    el('geoBtn').style.opacity = '1';
+    return;
+  }
+  
   navigator.geolocation.getCurrentPosition(async pos=>{
     await loadForLocation(pos.coords.latitude, pos.coords.longitude, 'Ihr Standort');
-  }, ()=>showError('Standort verweigert'));
+    isLoading = false;
+    el('geoBtn').disabled = false;
+    el('geoBtn').style.opacity = '1';
+  }, (err)=>{
+    showError('Standort verweigert');
+    isLoading = false;
+    el('geoBtn').disabled = false;
+    el('geoBtn').style.opacity = '1';
+  });
 }
 
 function showError(msg){
@@ -27,7 +68,8 @@ function showError(msg){
 async function geocode(q){
   try{
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=1`;
-    const res = await fetch(url,{headers:{'User-Agent':'WeatherAndAllergiesDemo/1.0'}});
+    const res = await fetch(url,{headers:{'User-Agent':'WeatherAndAllergies-App/1.0 (location-search)'}});
+    if(res.status === 401 || res.status === 429) return null; // Rate limited or unauthorized
     const j = await res.json();
     if(!j || !j[0]) return null;
     return {lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon), display_name: j[0].display_name};
