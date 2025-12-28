@@ -1,126 +1,172 @@
-# Wetter & Allergien — GitHub Pages Website (Deutsch)
+# Weather & Allergies — GitHub Pages Website
 
-Eine moderne, statische Website zur Anzeige von aktuellen Wetterdaten und Polleninformationen. Gehostet auf **GitHub Pages** — völlig kostenlos und ohne Backend-Server.
+A modern, static website for displaying current weather data and pollen information. Hosted on **GitHub Pages** — completely free and without a backend server.
 
 ## Features
 
-- **Moderne UI**: Glassmorphismus-Design mit Dark Mode (responsive)
-- **Wetter**: Aktuelle Daten via **Open-Meteo** (kostenlos, CORS-freundlich, kein API-Schlüssel nötig)
-- **Pollen / Allergien**: Prognosen via **Open-Meteo** (kostenlos, CORS-freundlich, kein API-Schlüssel nötig)
-- **Ortsuche**: Geocoding via OpenStreetMap / Nominatim
-- **Standort**: Geolocation im Browser unterstützt
-- **Alles in Deutsch**: Texte und Wetterbeschreibungen
+- **Modern UI**: Glassmorphism design with Dark Mode (responsive)
+- **Weather**: Current data + 7-16 day forecast via **Open-Meteo** (free, CORS-friendly, no API key needed)
+- **Pollen / Allergies**: Forecasts via **Open-Meteo** (free, CORS-friendly, no API key needed)
+- **Location Search & Geolocation**: Geocoding via **Geoapify** (free, API key with domain restriction)
+- **Geolocation**: Browser geolocation with reverse geocoding (displays city names)
+- **Forecast Modal**: Clickable weather forecast with temperature and weather description
+- **German UI**: All website texts and weather descriptions in German
 
 ## Setup
 
-### 1. Repository klonen & pushen
+### 1. Create Geoapify API Key
+
+1. Go to [geoapify.com](https://geoapify.com) and sign up (free)
+2. Create a new API key
+3. **Important**: Set restrictions:
+   - Go to **API Keys** → your key → **Restrict to domain/origin**
+   - Add your GitHub Pages URL: `https://<your-username>.github.io`
+   - Save the changes
+4. Copy the API key
+5. Open `js/app.js` and replace the `GEOAPIFY_API_KEY`:
+   ```javascript
+   const GEOAPIFY_API_KEY = 'your-api-key-here';
+   ```
+
+### 2. Clone & Push Repository
 
 ```bash
-git clone <dein-repo-url>
+git clone <your-repo-url>
 cd WeatherAndAllergies
 git add .
-git commit -m "Initial commit"
+git commit -m "Add Geoapify API key"
 git push origin main
 ```
 
-### 3. GitHub Pages aktivieren
+### 3. Enable GitHub Pages
 
-1. Pushe deinen Code zu GitHub:
-   ```bash
-   git add .
-   git commit -m "Add weather and allergy site"
-   git push origin main
-   ```
-
-2. In deinem GitHub Repository gehe zu **Settings** → **Pages**
-
-3. Stelle folgendes ein:
+1. In your GitHub repository, go to **Settings** → **Pages**
+2. Configure:
    - **Source**: `Deploy from a branch`
    - **Branch**: `main` 
    - **Folder**: `/ (root)`
-   - Klicke **Save**
-
-4. Nach ~1–2 Minuten sollte die Seite live sein unter:
+   - Click **Save**
+3. After ~1–2 minutes, your site will be live at:
    ```
    https://<username>.github.io/<repo-name>/
    ```
-   (Beispiel: `https://max.github.io/WeatherAndAllergies/`)
 
-## Lokales Testen
+## Local Testing
 
 ```bash
 python3 -m http.server 8000
-# Dann öffne http://localhost:8000 im Browser
+# Then open http://localhost:8000 in your browser
 ```
 
-## APIs im Detail
+## API Details
 
-### Open-Meteo (Wetter)
+### Open-Meteo (Weather)
 
 - **URL**: https://api.open-meteo.com/v1/forecast
-- **Pros**:
-  - ✓ Kostenlos, unbegrenzt
-  - ✓ Kein API-Schlüssel nötig
-  - ✓ CORS aktiviert
-  - ✓ Deutsche Städte vollständig unterstützt
-- **Dokumentation**: https://open-meteo.com/en/docs
+- **Advantages**:
+  - ✓ Free, unlimited
+  - ✓ No API key needed
+  - ✓ CORS enabled
+  - ✓ Full support for German cities
+- **Documentation**: https://open-meteo.com/en/docs
 
-### Open-Meteo (Pollen / Allergien)
+### Open-Meteo (Pollen / Allergies)
 
 - **URL**: https://air-quality-api.open-meteo.com/v1/air-quality
-- **Pros**:
-  - ✓ Kostenlos, unbegrenzt
-  - ✓ Kein API-Schlüssel nötig
-  - ✓ CORS aktiviert
-  - ✓ Pollen-Prognosen für 6 Allergen-Typen (Erle, Birke, Gräser, Beifuß, Olive, Ambrosia)
-- **Dokumentation**: https://open-meteo.com/en/docs/air-quality-api
+- **Advantages**:
+  - ✓ Free, unlimited
+  - ✓ No API key needed
+  - ✓ CORS enabled
+  - ✓ Pollen forecasts for 6 allergen types (alder, birch, grass, mugwort, olive, ragweed)
+- **Documentation**: https://open-meteo.com/en/docs/air-quality-api
 
-### Nominatim / OpenStreetMap (Geocoding)
+### Geoapify (Geocoding & Reverse Geocoding)
 
-- **Pros**: Kostenlos, CORS-freundlich, keine Auth nötig
-- **Dokumentation**: https://nominatim.org/
+- **Function**: Geocoding for location search + reverse geocoding (coordinates → city names)
+- **Advantages**: Free tier with 3,000 requests/day, CORS enabled, domain restriction available
+- **Documentation**: https://geoapify.com/api/geocoding-api
 
-## Struktur
+## Project Structure
 
 ```
 .
-├── index.html          # Haupt-HTML
+├── index.html          # Main HTML
 ├── css/
-│   └── style.css       # Glassmorphismus-Design
+│   └── style.css       # Glassmorphism design
 ├── js/
-│   └── app.js          # Logik (API-Abfragen, DOM)
-├── README.md           # Diese Datei
-├── .gitignore          # Git-Ignore
+│   └── app.js          # Logic (API calls, DOM manipulation)
+├── README.md           # This file
+├── .gitignore          # Git ignore rules
 └── LICENSE             # MIT (optional)
 ```
 
-## Anpassungen & Erweiterungen
+## Technology Stack
 
-### Weitere Pollen-Typen hinzufügen
-In `js/app.js` die `getPollenFallback()`-Funktion erweitern:
+### Frontend
+- **HTML5**: Semantic markup for structure
+- **CSS3**: Custom CSS with CSS variables for theming, glassmorphism effects, responsive design with media queries
+- **Vanilla JavaScript (ES6+)**: No frameworks, no build tools required
+  - Fetch API for HTTP requests
+  - DOM manipulation and event handling
+  - Async/await for clean asynchronous code
+  - Browser Geolocation API for location detection
+
+### APIs (All Free & CORS-Enabled)
+- **Open-Meteo**: Weather forecasts and air quality/pollen data
+  - Current weather observations
+  - 7-16 day weather forecasts
+  - Hourly pollen concentrations for 6 allergen types
+- **Geoapify**: Geocoding and reverse geocoding
+  - Forward geocoding (search by location name)
+  - Reverse geocoding (coordinates → city names)
+
+### Hosting
+- **GitHub Pages**: Free static site hosting directly from git repository
+  - No backend server needed
+  - Automatic HTTPS
+  - Built-in CI/CD via GitHub Actions
+
+### Design Patterns
+- **Glassmorphism**: Frosted glass effect with backdrop blur and semi-transparent backgrounds
+- **Responsive Design**: Mobile-first approach with breakpoints for tablets/desktops
+- **Client-Side Only**: All data fetching and processing happens in the browser
+
+### Browser Support
+- Modern browsers with ES6 support (Chrome, Firefox, Safari, Edge)
+- Requires browser Geolocation API support
+- Requires Fetch API support
+
+## Customization & Extensions
+
+### Add More Pollen Types
+Edit the `getPollenFallback()` function in `js/app.js`:
 
 ```javascript
-types=['Ambrosia', 'Birke', 'Gräser', 'Roggen', ...];
+types=['Ambrosia', 'Birch', 'Grass', 'Ragweed', ...];
 ```
 
-### Sprache wechseln
-Alle deutschen Texte sind in HTML und JS. Einfach durchsuchen und ersetzen.
+### Change Language
+All German texts are in HTML and JS. Simply find and replace.
 
-### Farben anpassen
-Alle CSS-Variablen sind oben in `css/style.css` definiert (z. B. `--accent`, `--bg1`).
+### Customize Colors
+All CSS variables are defined at the top of `css/style.css` (e.g., `--accent`, `--bg1`).
 
 ## Troubleshooting
 
-**Q: Ortsuche funktioniert nicht**
-- A: Nominatim kann bei häufigen Abfragen limitiert sein. Versuche mit vollständiger Adresse/PLZ.
+**Q: "Unauthorized" error with Geoapify on GitHub Pages?**
+- A: Make sure your API key is restricted to your GitHub Pages domain in the Geoapify console. Wait 1–2 minutes after saving for changes to propagate.
 
-**Q: CORS-Fehler?**
-- A: Open-Meteo hat CORS aktiviert. Falls ein Custom-Endpoint verwendet wird, ggfs. einen CORS-Proxy nutzen (nicht für Produktion empfohlen).
+**Q: Location search not working?**
+- A: Verify your Geoapify API key is valid and you haven't exceeded your quota (free tier: 3,000 requests/day).
 
-## Lizenz
+**Q: CORS errors?**
+- A: Open-Meteo and Geoapify have CORS enabled. If using a custom endpoint, consider a CORS proxy (not recommended for production).
 
-Dieses Template ist Open Source (MIT). Verwende es frei für deine Projekte!
+## License
+
+This template is open source (MIT). Use it freely for your projects!
 
 ---
 
-**Fragen?** Gerne in GitHub Issues fragen oder hier README erweitern.
+**Questions?** Feel free to open a GitHub issue or expand this README.
+

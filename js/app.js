@@ -1,174 +1,178 @@
-// ============ KONFIGURATION ============
-const GEOAPIFY_API_KEY = '308aa1f469dd4868b6676fc094a5a6d2';
-let isLoading = false; // Debounce flag
-let currentForecastDays = 7; // Track how many days are currently loaded
-let currentForecastLat = null; // Store current forecast location
-let currentForecastLon = null;
-let currentLocationName = 'Standort'; // Store current location name for forecast modal
+// ============ CONFIGURATION & CONSTANTS ============
+const CONFIG = {
+  GEOAPIFY_KEY: '308aa1f469dd4868b6676fc094a5a6d2',
+  DEFAULT_LAT: 52.52,
+  DEFAULT_LON: 13.405,
+  DEFAULT_LOCATION: 'Berlin'
+};
 
-// ============ EVENT LISTENER ============
+const APIS = {
+  geoapifySearch: (q) => `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&limit=1&apiKey=${CONFIG.GEOAPIFY_KEY}`,
+  geoapifyReverse: (lat, lon) => `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${CONFIG.GEOAPIFY_KEY}`,
+  openMeteoWeather: (lat, lon) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=Europe%2FBerlin`,
+  openMeteoPollen: (lat, lon) => `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&pollen=alder,birch,grass,mugwort,olive,ragweed`,
+  openMeteoForecast: (lat, lon, days) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=${days}`
+};
+
+const WEATHER_CODES = {
+  0: 'Klar', 1: 'Teils bewölkt', 2: 'Bewölkt', 3: 'Bedeckt', 45: 'Nebel',
+  48: 'Nebel mit Raureif', 51: 'Leicht Niesel', 53: 'Mäßiger Niesel', 55: 'Intensiver Niesel',
+  61: 'Schwacher Regen', 63: 'Mäßiger Regen', 65: 'Starker Regen',
+  71: 'Schwacher Schneefall', 73: 'Mäßiger Schneefall', 75: 'Starker Schneefall',
+  80: 'Schwache Schauer', 81: 'Mäßige Schauer', 82: 'Intensive Schauer',
+  85: 'Schwache Schnee-Schauer', 86: 'Intensive Schnee-Schauer',
+  95: 'Gewitter', 96: 'Gewitter mit Hagel', 99: 'Gewitter mit Hagel (stark)'
+};
+
+const POLLEN_NAMES = {
+  alder: 'Erle', birch: 'Birke', grass: 'Gräser', 
+  mugwort: 'Beifuß', olive: 'Olive', ragweed: 'Ambrosia'
+};
+
+// ============ STATE ============
+const state = {
+  isLoading: false,
+  currentForecastDays: 7,
+  currentForecastLat: null,
+  currentForecastLon: null,
+  currentLocationName: 'Standort'
+};
+
+// ============ DOM UTILITIES ============
 const el = id => document.getElementById(id);
+const setButtonState = (btn, disabled, opacity = '1') => {
+  btn.disabled = disabled;
+  btn.style.opacity = opacity;
+};
+
+// ============ EVENT LISTENERS ============
 el('searchBtn').addEventListener('click', onSearch);
 el('geoBtn').addEventListener('click', useGeolocation);
-el('weatherCard').addEventListener('click', () => showForecast(currentForecastLat, currentForecastLon));
+el('weatherCard').addEventListener('click', () => showForecast(state.currentForecastLat, state.currentForecastLon));
 el('forecastClose').addEventListener('click', closeForecast);
 el('forecastLoadMore').addEventListener('click', loadMoreForecastDays);
 window.addEventListener('keydown', e => { if(e.key === 'Escape') closeForecast(); });
 
-// ============ SEARCH & GEO ============
-async function onSearch(){
-  if(isLoading) return; // Prevent duplicate requests
+// ============ USER INTERACTIONS ============
+async function onSearch() {
   const q = el('placeInput').value.trim();
   if(!q) return;
   
-  isLoading = true;
-  el('searchBtn').disabled = true;
-  el('searchBtn').style.opacity = '0.6';
+  const btn = el('searchBtn');
+  setButtonState(btn, true, '0.6');
   
-  const loc = await geocode(q);
-  if(!loc) {
-    showError('Ort nicht gefunden');
-    isLoading = false;
-    el('searchBtn').disabled = false;
-    el('searchBtn').style.opacity = '1';
-    return;
+  try {
+    const loc = await geocode(q);
+    if(!loc) {
+      showError('Ort nicht gefunden');
+      return;
+    }
+    await loadForLocation(loc.lat, loc.lon, loc.display_name);
+  } finally {
+    setButtonState(btn, false);
   }
-  
-  await loadForLocation(loc.lat, loc.lon, loc.display_name);
-  
-  isLoading = false;
-  el('searchBtn').disabled = false;
-  el('searchBtn').style.opacity = '1';
 }
 
-async function useGeolocation(){
-  if(isLoading) return;
-  await requestAndLoadLocation();
-}
-
-async function requestAndLoadLocation(){
-  if(isLoading) return; // Prevent duplicate requests
-  isLoading = true;
-  el('geoBtn').disabled = true;
-  el('geoBtn').style.opacity = '0.6';
+async function useGeolocation() {
+  const btn = el('geoBtn');
+  setButtonState(btn, true, '0.6');
   
-  if(!navigator.geolocation) {
-    showError('Geolocation nicht verfügbar');
-    isLoading = false;
-    el('geoBtn').disabled = false;
-    el('geoBtn').style.opacity = '1';
-    return;
-  }
-  
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-    let locationName = 'Aktueller Standort';
-    
-    // Try reverse geocoding via Geoapify
-    try {
-      const reverseUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${GEOAPIFY_API_KEY}`;
-      const res = await fetch(reverseUrl);
-      if(res.ok) {
-        const data = await res.json();
-        if(data.features && data.features[0]) {
-          const props = data.features[0].properties;
-          locationName = props.name || props.city || props.county || props.state || 'Aktueller Standort';
-        }
-      }
-    } catch(e) {
-      console.log('Reverse geocoding failed, using default label');
+  try {
+    if(!navigator.geolocation) {
+      showError('Geolocation nicht verfügbar');
+      return;
     }
     
+    const pos = await new Promise((resolve, reject) => 
+      navigator.geolocation.getCurrentPosition(resolve, reject)
+    );
+    
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const locationName = await reverseGeocode(lat, lon) || 'Aktueller Standort';
+    
     await loadForLocation(lat, lon, locationName);
-    isLoading = false;
-    el('geoBtn').disabled = false;
-    el('geoBtn').style.opacity = '1';
-  }, (err)=>{
+  } catch(e) {
     showError('Standort verweigert');
-    isLoading = false;
-    el('geoBtn').disabled = false;
-    el('geoBtn').style.opacity = '1';
-  });
+  } finally {
+    setButtonState(btn, false);
+  }
 }
 
 
-function showError(msg){
+function showError(msg) {
   el('weatherContent').innerHTML = `<p class="muted">${msg}</p>`;
 }
 
 // ============ GEOCODING ============
-async function geocode(q){
-  try{
-    const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&limit=1&apiKey=${GEOAPIFY_API_KEY}`;
-    console.log('Search query:', q);
-    const res = await fetch(url);
+async function geocode(q) {
+  try {
+    const res = await fetch(APIS.geoapifySearch(q));
+    if(!res.ok) return null;
     
-    console.log('Geoapify response status:', res.status);
-    if(!res.ok) {
-      console.error('Geocode failed. Status:', res.status);
-      return null;
-    }
     const data = await res.json();
-    console.log('Geoapify response data:', data);
-    if(!data.features || !data.features[0]) {
-      console.log('No features found');
-      return null;
-    }
+    if(!data.features?.length) return null;
+    
     const feature = data.features[0];
     const coords = feature.geometry.coordinates;
     const props = feature.properties;
     const display_name = props.formatted || `${props.city || props.name}, ${props.country}`;
+    
     return {lat: coords[1], lon: coords[0], display_name};
-  }catch(e){
+  } catch(e) {
     console.error('Geocode error:', e);
     return null;
   }
 }
 
-// ============ MAIN LOADER ============
-async function loadForLocation(lat, lon, label){
-  // Store for forecast modal
-  currentForecastLat = lat;
-  currentForecastLon = lon;
-  currentLocationName = label;
+async function reverseGeocode(lat, lon) {
+  try {
+    const res = await fetch(APIS.geoapifyReverse(lat, lon));
+    if(!res.ok) return null;
+    
+    const data = await res.json();
+    if(!data.features?.length) return null;
+    
+    const props = data.features[0].properties;
+    return props.name || props.city || props.county || props.state || null;
+  } catch(e) {
+    console.log('Reverse geocoding failed');
+    return null;
+  }
+}
+
+// ============ MAIN LOCATION LOADER ============
+async function loadForLocation(lat, lon, label) {
+  state.currentForecastLat = lat;
+  state.currentForecastLon = lon;
+  state.currentLocationName = label;
   
-  // Update location display
   el('locationTitle').textContent = label;
-  
   el('weatherContent').innerHTML = `<p class="muted">Lade Wetter für ${label}…</p>`;
   el('allergyContent').innerHTML = `<p class="muted">Lade Polleninformationen…</p>`;
 
-  // Wetter: Open-Meteo (kostenlos, CORS-freundlich, kein Key nötig)
-  try{
-    const weather = await fetchOpenMeteo(lat, lon);
+  try {
+    const weather = await fetch(APIS.openMeteoWeather(lat, lon)).then(r => r.json());
     renderWeather(weather, label);
-  }catch(e){
+  } catch(e) {
     showError('Wetterdaten konnten nicht geladen werden.');
   }
 
-  // Allergien/Pollen: Open-Meteo (kostenlos, kein Key nötig)
-  try{
-    const pollen = await fetchOpenMeteoPollen(lat, lon);
+  try {
+    const pollen = await fetchAndParsePollen(lat, lon);
     renderAllergy(pollen);
-  }catch(e){
+  } catch(e) {
     el('allergyContent').innerHTML = `<p class="muted">Polleninformationen nicht verfügbar.</p>`;
   }
 }
 
-// ============ WETTER (OPEN-METEO) ============
-async function fetchOpenMeteo(lat, lon){
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=Europe%2FBerlin`;
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('open-meteo failed');
-  return res.json();
-}
-
-function renderWeather(data, label){
+// ============ WEATHER (OPEN-METEO) ============
+function renderWeather(data, label) {
   const cur = data.current_weather;
   const code = cur.weather_code;
-  const desc = getWeatherDescription(code);
-  const html = `
+  const desc = WEATHER_CODES[code] || 'Unbekannt';
+  
+  el('weatherContent').innerHTML = `
     <div class="weather-row">
       <div>
         <div class="temp">${Math.round(cur.temperature)}°C</div>
@@ -177,34 +181,15 @@ function renderWeather(data, label){
       </div>
     </div>
   `;
-  el('weatherContent').innerHTML = html;
 }
 
-function getWeatherDescription(code){
-  const map = {
-    0: 'Klar', 1: 'Teils bewölkt', 2: 'Bewölkt', 3: 'Bedeckt', 45: 'Nebel',
-    48: 'Nebel mit Raureif', 51: 'Leicht Niesel', 53: 'Mäßiger Niesel', 55: 'Intensiver Niesel',
-    61: 'Schwacher Regen', 63: 'Mäßiger Regen', 65: 'Starker Regen',
-    71: 'Schwacher Schneefall', 73: 'Mäßiger Schneefall', 75: 'Starker Schneefall',
-    80: 'Schwache Schauer', 81: 'Mäßige Schauer', 82: 'Intensive Schauer',
-    85: 'Schwache Schnee-Schauer', 86: 'Intensive Schnee-Schauer',
-    95: 'Gewitter', 96: 'Gewitter mit Hagel', 99: 'Gewitter mit Hagel (stark)'
-  };
-  return map[code] || 'Unbekannt';
-}
-
-// ============ ALLERGIEN/POLLEN (OPEN-METEO) ============
-async function fetchOpenMeteoPollen(lat, lon){
-  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&pollen=alder,birch,grass,mugwort,olive,ragweed`;
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('open-meteo pollen failed');
+// ============ POLLEN/ALLERGIES (OPEN-METEO) ============
+async function fetchAndParsePollen(lat, lon) {
+  const res = await fetch(APIS.openMeteoPollen(lat, lon));
+  if(!res.ok) throw new Error('pollen failed');
+  
   const data = await res.json();
-  return parseOpenMeteoPollen(data);
-}
-
-function parseOpenMeteoPollen(data){
-  // Hole aktuelle Pollenwerte
-  if(!data.hourly) return getPollenFallback();
+  if(!data.hourly?.pollen) return getPollenFallback();
   
   const latest = data.hourly.pollen;
   const values = {
@@ -216,41 +201,37 @@ function parseOpenMeteoPollen(data){
     olive: latest.olive?.[latest.olive.length - 1] || 0
   };
   
-  // Finde dominante Pollen
   const sorted = Object.entries(values).sort(([,a], [,b]) => b - a);
-  const domTypes = sorted.filter(([,v]) => v > 0).slice(0,3).map(([k]) => {
-    const map = {alder:'Erle', birch:'Birke', grass:'Gräser', mugwort:'Beifuß', olive:'Olive', ragweed:'Ambrosia'};
-    return map[k] || k;
-  });
+  const domTypes = sorted
+    .filter(([,v]) => v > 0)
+    .slice(0, 3)
+    .map(([k]) => POLLEN_NAMES[k] || k);
   
   const maxVal = sorted[0]?.[1] || 0;
-  let level = 'niedrig';
-  if(maxVal > 50) level = 'hoch';
-  else if(maxVal > 10) level = 'mittel';
+  const level = maxVal > 50 ? 'hoch' : maxVal > 10 ? 'mittel' : 'niedrig';
   
   return {level, types: domTypes.length > 0 ? domTypes : ['Keine Daten']};
 }
 
-function getPollenFallback(lat = 52){
+function getPollenFallback() {
   const month = new Date().getMonth() + 1;
   let level = 'niedrig', types = ['Ambrosia'];
   
-  // Grobe Heuristik für Deutschland (Breitengrad ~48-55)
-  if(month===1 || month===2) {level='niedrig'; types=['Hasel', 'Erle'];}
-  else if(month===3) {level='mittel'; types=['Hasel', 'Erle', 'Birke'];}
-  else if(month===4 || month===5) {level='hoch'; types=['Birke', 'Gräser', 'Fichten'];}
-  else if(month===6 || month===7) {level='mittel'; types=['Gräser', 'Getreide', 'Linden'];}
-  else if(month===8 || month===9) {level='mittel'; types=['Gräser', 'Nessel', 'Ambrosia', 'Beifuß'];}
-  else if(month===10) {level='niedrig'; types=['Ambrosia', 'Nessel', 'Beifuß'];}
-  else {level='niedrig'; types=['Ambrosia', 'Moos', 'Beifuß'];}
+  if(month === 1 || month === 2) {level = 'niedrig'; types = ['Hasel', 'Erle'];}
+  else if(month === 3) {level = 'mittel'; types = ['Hasel', 'Erle', 'Birke'];}
+  else if(month === 4 || month === 5) {level = 'hoch'; types = ['Birke', 'Gräser', 'Fichten'];}
+  else if(month === 6 || month === 7) {level = 'mittel'; types = ['Gräser', 'Getreide', 'Linden'];}
+  else if(month === 8 || month === 9) {level = 'mittel'; types = ['Gräser', 'Nessel', 'Ambrosia', 'Beifuß'];}
+  else if(month === 10) {level = 'niedrig'; types = ['Ambrosia', 'Nessel', 'Beifuß'];}
+  else {level = 'niedrig'; types = ['Ambrosia', 'Moos', 'Beifuß'];}
   
   return {level, types};
 }
 
-function renderAllergy(pollen){
-  const mapLevel = {niedrig:'Niedrig ✓', mittel:'Mäßig ⚠', hoch:'Hoch ⚠⚠'};
+function renderAllergy(pollen) {
+  const mapLevel = {niedrig: 'Niedrig ✓', mittel: 'Mäßig ⚠', hoch: 'Hoch ⚠⚠'};
   const levelText = mapLevel[pollen.level] || 'Unbekannt';
-  const typesText = pollen.types ? pollen.types.join(', ') : 'N/A';
+  const typesText = pollen.types?.join(', ') || 'N/A';
   
   el('allergyContent').innerHTML = `
     <div>
@@ -261,90 +242,67 @@ function renderAllergy(pollen){
   `;
 }
 
-// ============ AUTO-LOAD ON PAGE LOAD ============
-// Versuche, den Standort automatisch beim Laden zu ermitteln
-if(navigator.geolocation){
+// ============ AUTO-LOAD ON PAGE INIT ============
+if(navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
     async pos => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
-      let locationName = 'Aktueller Standort';
-      
-      // Try reverse geocoding
-      try {
-        const reverseUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${GEOAPIFY_API_KEY}`;
-        const res = await fetch(reverseUrl);
-        if(res.ok) {
-          const data = await res.json();
-          if(data.features && data.features[0]) {
-            const props = data.features[0].properties;
-            locationName = props.name || props.city || props.county || props.state || 'Aktueller Standort';
-          }
-        }
-      } catch(e) {
-        console.log('Reverse geocoding failed, using default label');
-      }
-      
+      const locationName = await reverseGeocode(lat, lon) || 'Aktueller Standort';
       loadForLocation(lat, lon, locationName);
     },
-    () => {
-      // Fallback: wenn Geolocation verweigert, zeige Demo-Ort
-      loadForLocation(52.52, 13.405, 'Berlin');
-    }
+    () => loadForLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION)
   );
 } else {
-  // Fallback: wenn Geolocation nicht verfügbar
-  loadForLocation(52.52, 13.405, 'Berlin');
+  loadForLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION);
 }
 
-// ============ FORECAST FUNCTIONS ============
-async function showForecast(lat, lon){
+// ============ FORECAST MODAL ============
+async function showForecast(lat, lon) {
   if(!lat || !lon) return;
-  currentForecastDays = 7;
-  currentForecastLat = lat;
-  currentForecastLon = lon;
+  state.currentForecastDays = 7;
   
-  el('forecastTitle').textContent = `Vorhersage für ${currentLocationName}`;
+  el('forecastTitle').textContent = `Vorhersage für ${state.currentLocationName}`;
   el('forecastModal').style.display = 'flex';
   el('forecastGrid').innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center">Lade Vorhersage…</p>';
   
   await renderForecastDays(lat, lon, 7);
 }
 
-function closeForecast(){
+function closeForecast() {
   el('forecastModal').style.display = 'none';
 }
 
-async function loadMoreForecastDays(){
-  const newDays = Math.min(currentForecastDays + 7, 16); // API max is 16 days
-  if(newDays === currentForecastDays) return; // Already at max
+async function loadMoreForecastDays() {
+  const newDays = Math.min(state.currentForecastDays + 7, 16);
+  if(newDays === state.currentForecastDays) return;
   
-  currentForecastDays = newDays;
+  state.currentForecastDays = newDays;
   el('forecastLoadMore').disabled = true;
-  await renderForecastDays(currentForecastLat, currentForecastLon, newDays);
+  await renderForecastDays(state.currentForecastLat, state.currentForecastLon, newDays);
   el('forecastLoadMore').disabled = false;
   
-  if(currentForecastDays >= 16){
+  if(state.currentForecastDays >= 16) {
     el('forecastLoadMore').disabled = true;
     el('forecastLoadMore').textContent = 'Maximale Tage erreicht (16)';
   }
 }
 
-async function renderForecastDays(lat, lon, days){
-  try{
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=${days}`;
-    const res = await fetch(url);
+async function renderForecastDays(lat, lon, days) {
+  try {
+    const res = await fetch(APIS.openMeteoForecast(lat, lon, days));
     if(!res.ok) throw new Error('forecast failed');
-    const data = await res.json();
     
+    const data = await res.json();
     const html = data.daily.time.map((date, i) => {
       const code = data.daily.weather_code[i];
-      const desc = getWeatherDescription(code);
+      const desc = WEATHER_CODES[code] || 'Unbekannt';
       const max = Math.round(data.daily.temperature_2m_max[i]);
       const min = Math.round(data.daily.temperature_2m_min[i]);
+      
       const dateObj = new Date(date);
-      const dayName = dateObj.toLocaleDateString('de-DE', {weekday:'long'});
-      const dayDate = dateObj.toLocaleDateString('de-DE', {month:'numeric', day:'numeric'});
+      const dayName = dateObj.toLocaleDateString('de-DE', {weekday: 'long'});
+      const dayDate = dateObj.toLocaleDateString('de-DE', {month: 'numeric', day: 'numeric'});
       
       return `
         <div class="forecast-day">
@@ -364,15 +322,14 @@ async function renderForecastDays(lat, lon, days){
     
     el('forecastGrid').innerHTML = html;
     
-    // Update load more button
-    if(days >= 16){
+    if(days >= 16) {
       el('forecastLoadMore').disabled = true;
       el('forecastLoadMore').textContent = 'Maximale Tage erreicht (16)';
     } else {
       el('forecastLoadMore').disabled = false;
       el('forecastLoadMore').textContent = `Weitere Tage laden (+${Math.min(7, 16 - days)})`;
     }
-  }catch(e){
+  } catch(e) {
     el('forecastGrid').innerHTML = '<p class="muted" style="padding:20px;text-align:center">Vorhersage konnte nicht geladen werden</p>';
   }
 }
