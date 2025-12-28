@@ -1,9 +1,10 @@
 // ============ KONFIGURATION ============
-// Alle APIs sind kostenlos und benötigen keinen API-Schlüssel
+const GEOAPIFY_API_KEY = '308aa1f469dd4868b6676fc094a5a6d2';
 let isLoading = false; // Debounce flag
 let currentForecastDays = 7; // Track how many days are currently loaded
 let currentForecastLat = null; // Store current forecast location
 let currentForecastLon = null;
+let currentLocationName = 'Standort'; // Store current location name for forecast modal
 
 // ============ EVENT LISTENER ============
 const el = id => document.getElementById(id);
@@ -60,7 +61,26 @@ async function requestAndLoadLocation(){
   }
   
   navigator.geolocation.getCurrentPosition(async pos=>{
-    await loadForLocation(pos.coords.latitude, pos.coords.longitude, 'Ihr Standort');
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    let locationName = 'Aktueller Standort';
+    
+    // Try reverse geocoding via Geoapify
+    try {
+      const reverseUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${GEOAPIFY_API_KEY}`;
+      const res = await fetch(reverseUrl);
+      if(res.ok) {
+        const data = await res.json();
+        if(data.features && data.features[0]) {
+          const props = data.features[0].properties;
+          locationName = props.name || props.city || props.county || props.state || 'Aktueller Standort';
+        }
+      }
+    } catch(e) {
+      console.log('Reverse geocoding failed, using default label');
+    }
+    
+    await loadForLocation(lat, lon, locationName);
     isLoading = false;
     el('geoBtn').disabled = false;
     el('geoBtn').style.opacity = '1';
@@ -72,6 +92,7 @@ async function requestAndLoadLocation(){
   });
 }
 
+
 function showError(msg){
   el('weatherContent').innerHTML = `<p class="muted">${msg}</p>`;
 }
@@ -79,13 +100,30 @@ function showError(msg){
 // ============ GEOCODING ============
 async function geocode(q){
   try{
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=1`;
-    const res = await fetch(url,{headers:{'User-Agent':'WeatherAndAllergies-App/1.0 (location-search)'}});
-    if(res.status === 401 || res.status === 429) return null; // Rate limited or unauthorized
-    const j = await res.json();
-    if(!j || !j[0]) return null;
-    return {lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon), display_name: j[0].display_name};
-  }catch(e){return null}
+    const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&limit=1&apiKey=${GEOAPIFY_API_KEY}`;
+    console.log('Search query:', q);
+    const res = await fetch(url);
+    
+    console.log('Geoapify response status:', res.status);
+    if(!res.ok) {
+      console.error('Geocode failed. Status:', res.status);
+      return null;
+    }
+    const data = await res.json();
+    console.log('Geoapify response data:', data);
+    if(!data.features || !data.features[0]) {
+      console.log('No features found');
+      return null;
+    }
+    const feature = data.features[0];
+    const coords = feature.geometry.coordinates;
+    const props = feature.properties;
+    const display_name = props.formatted || `${props.city || props.name}, ${props.country}`;
+    return {lat: coords[1], lon: coords[0], display_name};
+  }catch(e){
+    console.error('Geocode error:', e);
+    return null;
+  }
 }
 
 // ============ MAIN LOADER ============
@@ -93,6 +131,10 @@ async function loadForLocation(lat, lon, label){
   // Store for forecast modal
   currentForecastLat = lat;
   currentForecastLon = lon;
+  currentLocationName = label;
+  
+  // Update location display
+  el('locationTitle').textContent = label;
   
   el('weatherContent').innerHTML = `<p class="muted">Lade Wetter für ${label}…</p>`;
   el('allergyContent').innerHTML = `<p class="muted">Lade Polleninformationen…</p>`;
@@ -223,17 +265,36 @@ function renderAllergy(pollen){
 // Versuche, den Standort automatisch beim Laden zu ermitteln
 if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      loadForLocation(pos.coords.latitude, pos.coords.longitude, 'Aktueller Standort');
+    async pos => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      let locationName = 'Aktueller Standort';
+      
+      // Try reverse geocoding
+      try {
+        const reverseUrl = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${GEOAPIFY_API_KEY}`;
+        const res = await fetch(reverseUrl);
+        if(res.ok) {
+          const data = await res.json();
+          if(data.features && data.features[0]) {
+            const props = data.features[0].properties;
+            locationName = props.name || props.city || props.county || props.state || 'Aktueller Standort';
+          }
+        }
+      } catch(e) {
+        console.log('Reverse geocoding failed, using default label');
+      }
+      
+      loadForLocation(lat, lon, locationName);
     },
     () => {
       // Fallback: wenn Geolocation verweigert, zeige Demo-Ort
-      loadForLocation(52.52, 13.405, 'Berlin (Demo)');
+      loadForLocation(52.52, 13.405, 'Berlin');
     }
   );
 } else {
   // Fallback: wenn Geolocation nicht verfügbar
-  loadForLocation(52.52, 13.405, 'Berlin (Demo)');
+  loadForLocation(52.52, 13.405, 'Berlin');
 }
 
 // ============ FORECAST FUNCTIONS ============
@@ -243,6 +304,7 @@ async function showForecast(lat, lon){
   currentForecastLat = lat;
   currentForecastLon = lon;
   
+  el('forecastTitle').textContent = `Vorhersage für ${currentLocationName}`;
   el('forecastModal').style.display = 'flex';
   el('forecastGrid').innerHTML = '<p class="muted" style="grid-column:1/-1;text-align:center">Lade Vorhersage…</p>';
   

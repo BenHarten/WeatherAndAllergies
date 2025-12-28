@@ -16,13 +16,9 @@
   </header>
 
   <main class="container">
-    <section class="controls">
-      <div class="row">
-        <input id="placeInput" placeholder="Ort oder PLZ eingeben" />
-        <button id="searchBtn">Suchen</button>
-        <button id="geoBtn" title="Standort verwenden">Standort</button>
-      </div>
-    </section>
+    <div class="location-display">
+      <h2 id="locationTitle">Standort</h2>
+    </div>
 
     <section class="cards">
       <article class="card" id="weatherCard">
@@ -38,6 +34,14 @@
           <p class="muted">Noch keine Daten. Suche starten oder Standort verwenden.</p>
         </div>
       </article>
+    </section>
+
+    <section class="controls">
+      <div class="row">
+        <input id="placeInput" placeholder="Ort oder PLZ eingeben" />
+        <button id="searchBtn">Suchen</button>
+        <button id="geoBtn" title="Standort verwenden">Standort</button>
+      </div>
     </section>
 
     <footer class="footer">
