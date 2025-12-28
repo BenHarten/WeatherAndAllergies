@@ -48,6 +48,13 @@ button:active{opacity:0.85}
 .forecast-footer{display:flex;justify-content:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)}
 .forecast-load-more{background:linear-gradient(90deg,#7dd3fc,#60a5fa);border:0;color:#072030;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:500;transition:all 0.2s}
 .forecast-load-more:hover{opacity:0.9;transform:translateY(-2px)}
+
+/* Results Selection Modal */
+.results-list{display:flex;flex-direction:column;gap:10px}
+.result-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;cursor:pointer;transition:all 0.2s}
+.result-item:hover{background:rgba(255,255,255,0.1);border-color:#7dd3fc;transform:translateX(4px)}
+.result-item-name{font-weight:600;color:#7dd3fc;font-size:16px;margin-bottom:4px}
+.result-item-detail{color:#b6c2d8;font-size:13px}
 .forecast-load-more:disabled{opacity:0.5;cursor:not-allowed}
 
 .card{cursor:pointer}

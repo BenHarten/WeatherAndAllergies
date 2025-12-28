@@ -7,7 +7,7 @@ const CONFIG = {
 };
 
 const APIS = {
-  geoapifySearch: (q) => `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&limit=1&apiKey=${CONFIG.GEOAPIFY_KEY}`,
+  geoapifySearch: (q) => `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&limit=5&apiKey=${CONFIG.GEOAPIFY_KEY}`,
   geoapifyReverse: (lat, lon) => `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${CONFIG.GEOAPIFY_KEY}`,
   openMeteoWeather: (lat, lon) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=Europe%2FBerlin`,
   openMeteoPollen: (lat, lon) => `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&pollen=alder,birch,grass,mugwort,olive,ragweed`,
@@ -51,6 +51,7 @@ el('geoBtn').addEventListener('click', useGeolocation);
 el('weatherCard').addEventListener('click', () => showForecast(state.currentForecastLat, state.currentForecastLon));
 el('forecastClose').addEventListener('click', closeForecast);
 el('forecastLoadMore').addEventListener('click', loadMoreForecastDays);
+el('resultsClose').addEventListener('click', closeResults);
 window.addEventListener('keydown', e => { if(e.key === 'Escape') closeForecast(); });
 
 // ============ USER INTERACTIONS ============
@@ -62,12 +63,20 @@ async function onSearch() {
   setButtonState(btn, true, '0.6');
   
   try {
-    const loc = await geocode(q);
-    if(!loc) {
+    const results = await geocodeMultiple(q);
+    if(!results || results.length === 0) {
       showError('Ort nicht gefunden');
       return;
     }
-    await loadForLocation(loc.lat, loc.lon, loc.display_name);
+    
+    // If only 1 result, load directly
+    if(results.length === 1) {
+      const loc = results[0];
+      await loadForLocation(loc.lat, loc.lon, loc.display_name);
+    } else {
+      // Multiple results: show selection modal
+      showResultsModal(results);
+    }
   } finally {
     setButtonState(btn, false);
   }
@@ -105,7 +114,7 @@ function showError(msg) {
 }
 
 // ============ GEOCODING ============
-async function geocode(q) {
+async function geocodeMultiple(q) {
   try {
     const res = await fetch(APIS.geoapifySearch(q));
     if(!res.ok) return null;
@@ -113,16 +122,22 @@ async function geocode(q) {
     const data = await res.json();
     if(!data.features?.length) return null;
     
-    const feature = data.features[0];
-    const coords = feature.geometry.coordinates;
-    const props = feature.properties;
-    const display_name = props.formatted || `${props.city || props.name}, ${props.country}`;
-    
-    return {lat: coords[1], lon: coords[0], display_name};
+    // Return all results
+    return data.features.map(feature => {
+      const coords = feature.geometry.coordinates;
+      const props = feature.properties;
+      const display_name = props.formatted || `${props.city || props.name}, ${props.country}`;
+      return {lat: coords[1], lon: coords[0], display_name};
+    });
   } catch(e) {
     console.error('Geocode error:', e);
     return null;
   }
+}
+
+async function geocode(q) {
+  const results = await geocodeMultiple(q);
+  return results ? results[0] : null;
 }
 
 async function reverseGeocode(lat, lon) {
@@ -271,6 +286,33 @@ async function showForecast(lat, lon) {
 
 function closeForecast() {
   el('forecastModal').style.display = 'none';
+}
+
+// ============ RESULTS MODAL ============
+function showResultsModal(results) {
+  if(!results || results.length === 0) {
+    showError('Keine Ergebnisse gefunden');
+    return;
+  }
+  
+  const html = results.map(r => `
+    <div class="result-item" onclick="selectResult(${r.lat}, ${r.lon}, '${r.display_name.replace(/'/g, "\\'")}')">
+      <div class="result-item-name">${r.display_name.split(',')[0].trim()}</div>
+      <div class="result-item-detail">${r.display_name}</div>
+    </div>
+  `).join('');
+  
+  el('resultsList').innerHTML = html;
+  el('resultsModal').style.display = 'flex';
+}
+
+function closeResults() {
+  el('resultsModal').style.display = 'none';
+}
+
+async function selectResult(lat, lon, display_name) {
+  closeResults();
+  await loadForLocation(lat, lon, display_name);
 }
 
 async function loadMoreForecastDays() {
