@@ -10,7 +10,7 @@ const APIS = {
   geoapifySearch: (q) => `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(q)}&limit=5&apiKey=${CONFIG.GEOAPIFY_KEY}`,
   geoapifyReverse: (lat, lon) => `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${CONFIG.GEOAPIFY_KEY}`,
   openMeteoWeather: (lat, lon) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=Europe%2FBerlin`,
-  openMeteoPollen: (lat, lon) => `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&pollen=alder,birch,grass,mugwort,olive,ragweed`,
+  openMeteoPollen: (lat, lon) => `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen,european_aqi&timezone=Europe%2FBerlin`,
   openMeteoForecast: (lat, lon, days) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=${days}`
 };
 
@@ -200,21 +200,43 @@ function renderWeather(data, label) {
 
 // ============ POLLEN/ALLERGIES (OPEN-METEO) ============
 async function fetchAndParsePollen(lat, lon) {
-  const res = await fetch(APIS.openMeteoPollen(lat, lon));
-  if(!res.ok) throw new Error('pollen failed');
+  const url = APIS.openMeteoPollen(lat, lon);
+  const res = await fetch(url);
+  
+  if(!res.ok) {
+    console.error(`Pollen API error: ${res.status} ${res.statusText}`);
+    throw new Error(`pollen failed: ${res.status}`);
+  }
   
   const data = await res.json();
-  if(!data.hourly?.pollen) return getPollenFallback();
+  console.log('Pollen data:', data);
   
-  const latest = data.hourly.pollen;
+  if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar']};
+  
+  // Extract latest values for each pollen type
   const values = {
-    alder: latest.alder?.[latest.alder.length - 1] || 0,
-    birch: latest.birch?.[latest.birch.length - 1] || 0,
-    grass: latest.grass?.[latest.grass.length - 1] || 0,
-    mugwort: latest.mugwort?.[latest.mugwort.length - 1] || 0,
-    ragweed: latest.ragweed?.[latest.ragweed.length - 1] || 0,
-    olive: latest.olive?.[latest.olive.length - 1] || 0
+    alder: data.hourly.alder_pollen?.[data.hourly.alder_pollen.length - 1] || 0,
+    birch: data.hourly.birch_pollen?.[data.hourly.birch_pollen.length - 1] || 0,
+    grass: data.hourly.grass_pollen?.[data.hourly.grass_pollen.length - 1] || 0,
+    mugwort: data.hourly.mugwort_pollen?.[data.hourly.mugwort_pollen.length - 1] || 0,
+    ragweed: data.hourly.ragweed_pollen?.[data.hourly.ragweed_pollen.length - 1] || 0,
+    olive: data.hourly.olive_pollen?.[data.hourly.olive_pollen.length - 1] || 0
   };
+  
+  console.log('Hourly data keys:', Object.keys(data.hourly));
+  console.log('European AQI array:', data.hourly.european_aqi);
+  
+  // Find last non-null AQI value (since array often ends with nulls)
+  let aqi = null;
+  if(data.hourly.european_aqi && data.hourly.european_aqi.length > 0) {
+    for(let i = data.hourly.european_aqi.length - 1; i >= 0; i--) {
+      if(data.hourly.european_aqi[i] !== null && data.hourly.european_aqi[i] !== undefined) {
+        aqi = data.hourly.european_aqi[i];
+        break;
+      }
+    }
+  }
+  console.log('AQI value:', aqi);
   
   const sorted = Object.entries(values).sort(([,a], [,b]) => b - a);
   const domTypes = sorted
@@ -223,36 +245,41 @@ async function fetchAndParsePollen(lat, lon) {
     .map(([k]) => POLLEN_NAMES[k] || k);
   
   const maxVal = sorted[0]?.[1] || 0;
-  const level = maxVal > 50 ? 'hoch' : maxVal > 10 ? 'mittel' : 'niedrig';
+  let level;
+  if(maxVal === 0) level = 'keine';
+  else if(maxVal <= 10) level = 'sehr_niedrig';
+  else if(maxVal <= 30) level = 'niedrig';
+  else if(maxVal <= 80) level = 'mäßig';
+  else if(maxVal <= 150) level = 'hoch';
+  else level = 'sehr_hoch';
   
-  return {level, types: domTypes.length > 0 ? domTypes : ['Keine Daten']};
-}
-
-function getPollenFallback() {
-  const month = new Date().getMonth() + 1;
-  let level = 'niedrig', types = ['Ambrosia'];
-  
-  if(month === 1 || month === 2) {level = 'niedrig'; types = ['Hasel', 'Erle'];}
-  else if(month === 3) {level = 'mittel'; types = ['Hasel', 'Erle', 'Birke'];}
-  else if(month === 4 || month === 5) {level = 'hoch'; types = ['Birke', 'Gräser', 'Fichten'];}
-  else if(month === 6 || month === 7) {level = 'mittel'; types = ['Gräser', 'Getreide', 'Linden'];}
-  else if(month === 8 || month === 9) {level = 'mittel'; types = ['Gräser', 'Nessel', 'Ambrosia', 'Beifuß'];}
-  else if(month === 10) {level = 'niedrig'; types = ['Ambrosia', 'Nessel', 'Beifuß'];}
-  else {level = 'niedrig'; types = ['Ambrosia', 'Moos', 'Beifuß'];}
-  
-  return {level, types};
+  return {level, types: domTypes.length > 0 ? domTypes : ['Keine Daten'], aqi};
 }
 
 function renderAllergy(pollen) {
-  const mapLevel = {niedrig: 'Niedrig ✓', mittel: 'Mäßig ⚠', hoch: 'Hoch ⚠⚠'};
+  const mapLevel = {
+    keine: 'Keine ✓',
+    sehr_niedrig: 'Sehr niedrig ✓',
+    niedrig: 'Niedrig ✓',
+    mäßig: 'Mäßig ⚠',
+    hoch: 'Hoch ⚠⚠',
+    sehr_hoch: 'Sehr hoch ⚠⚠⚠',
+    null: 'Keine Daten'
+  };
   const levelText = mapLevel[pollen.level] || 'Unbekannt';
   const typesText = pollen.types?.join(', ') || 'N/A';
+  
+  let aqiText = '';
+  if(pollen.aqi !== null && pollen.aqi !== undefined) {
+    const aqiLevel = pollen.aqi <= 15 ? 'Gut' : pollen.aqi <= 30 ? 'Zufriedenstellend' : pollen.aqi <= 55 ? 'Mäßig' : pollen.aqi <= 100 ? 'Schlecht' : 'Sehr schlecht';
+    aqiText = `<div class="muted">Luftqualität: ${pollen.aqi} (${aqiLevel})</div>`;
+  }
   
   el('allergyContent').innerHTML = `
     <div>
       <div class="meta">Pollenbelastung: <strong>${levelText}</strong></div>
       <div class="muted">Dominante Pollen: ${typesText}</div>
-      <p class="muted" style="font-size:0.85em; margin-top:8px;">Daten von Open-Meteo Air Quality API</p>
+      ${aqiText}
     </div>
   `;
 }
