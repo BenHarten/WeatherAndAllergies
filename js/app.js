@@ -182,20 +182,37 @@ async function loadForLocation(lat, lon, label) {
 }
 
 // ============ WEATHER (OPEN-METEO) ============
-function renderWeather(data, label) {
-  const cur = data.current_weather;
-  const code = cur.weather_code;
-  const desc = WEATHER_CODES[code] || 'Unbekannt';
-  
-  el('weatherContent').innerHTML = `
-    <div class="weather-row">
-      <div>
-        <div class="temp">${Math.round(cur.temperature)}°C</div>
-        <div class="meta">${label} · ${desc}</div>
-        <div class="meta">Wind ${Math.round(cur.windspeed)} km/h · Richtung ${Math.round(cur.winddirection)}°</div>
-      </div>
+function degreeToCompass(degrees) {
+  const directions = ['N', 'NNO', 'NO', 'ONO', 'O', 'OSO', 'SO', 'SSO', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(degrees / 22.5) % 16;
+  return directions[index];
+}
+
+// Generic card renderer for left/right layout
+function renderCard(elementId, leftHTML, rightHTML, containerClass) {
+  const rightContent = rightHTML ? `<div class="${containerClass}-right">${rightHTML}</div>` : '';
+  el(elementId).innerHTML = `
+    <div class="${containerClass}-container">
+      <div class="${containerClass}-left">${leftHTML}</div>
+      ${rightContent}
     </div>
   `;
+}
+
+function renderWeather(data, label) {
+  const cur = data.current_weather;
+  const code = cur.weathercode;
+  const desc = WEATHER_CODES[code] || 'Unbekannt';
+  const windDirection = degreeToCompass(cur.winddirection);
+  
+  const leftHTML = `
+    <div class="weather-condition">${desc}</div>
+    <div class="weather-wind">Wind ${Math.round(cur.windspeed)} km/h · ${windDirection} (${Math.round(cur.winddirection)}°)</div>
+  `;
+  
+  const rightHTML = `<div class="weather-temp">${Math.round(cur.temperature)}°C</div>`;
+  
+  renderCard('weatherContent', leftHTML, rightHTML, 'weather');
 }
 
 // ============ POLLEN/ALLERGIES (OPEN-METEO) ============
@@ -209,7 +226,6 @@ async function fetchAndParsePollen(lat, lon) {
   }
   
   const data = await res.json();
-  console.log('Pollen data:', data);
   
   if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar']};
   
@@ -223,9 +239,6 @@ async function fetchAndParsePollen(lat, lon) {
     olive: data.hourly.olive_pollen?.[data.hourly.olive_pollen.length - 1] || 0
   };
   
-  console.log('Hourly data keys:', Object.keys(data.hourly));
-  console.log('European AQI array:', data.hourly.european_aqi);
-  
   // Find last non-null AQI value (since array often ends with nulls)
   let aqi = null;
   if(data.hourly.european_aqi && data.hourly.european_aqi.length > 0) {
@@ -236,7 +249,6 @@ async function fetchAndParsePollen(lat, lon) {
       }
     }
   }
-  console.log('AQI value:', aqi);
   
   const sorted = Object.entries(values).sort(([,a], [,b]) => b - a);
   const domTypes = sorted
@@ -253,7 +265,7 @@ async function fetchAndParsePollen(lat, lon) {
   else if(maxVal <= 150) level = 'hoch';
   else level = 'sehr_hoch';
   
-  return {level, types: domTypes.length > 0 ? domTypes : ['Keine Daten'], aqi};
+  return {level, types: domTypes.length > 0 ? domTypes : ['Keine'], aqi};
 }
 
 function renderAllergy(pollen) {
@@ -269,22 +281,33 @@ function renderAllergy(pollen) {
   const levelText = mapLevel[pollen.level] || 'Unbekannt';
   const typesText = pollen.types?.join(', ') || 'N/A';
   
-  let aqiText = '';
+  const leftHTML = `
+    <div class="allergy-level">Pollenbelastung: <strong>${levelText}</strong></div>
+    <div class="allergy-types">Dominante Pollen: ${typesText}</div>
+  `;
+  
+  let rightHTML = '';
   if(pollen.aqi !== null && pollen.aqi !== undefined) {
     const aqiLevel = pollen.aqi <= 15 ? 'Gut' : pollen.aqi <= 30 ? 'Zufriedenstellend' : pollen.aqi <= 55 ? 'Mäßig' : pollen.aqi <= 100 ? 'Schlecht' : 'Sehr schlecht';
-    aqiText = `<div class="muted">Luftqualität: ${pollen.aqi} (${aqiLevel})</div>`;
+    rightHTML = `
+      <div class="allergy-aqi-label-top">Luftqualität</div>
+      <div class="allergy-aqi-value">${pollen.aqi}</div>
+      <div class="allergy-aqi-level">${aqiLevel}</div>
+    `;
   }
   
-  el('allergyContent').innerHTML = `
-    <div>
-      <div class="meta">Pollenbelastung: <strong>${levelText}</strong></div>
-      <div class="muted">Dominante Pollen: ${typesText}</div>
-      ${aqiText}
-    </div>
-  `;
+  renderCard('allergyContent', leftHTML, rightHTML, 'allergy');
+}
+
+// ============ DATE DISPLAY ============
+function updateDateDisplay() {
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('de-DE', {weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'});
+  el('locationDate').textContent = dateStr;
 }
 
 // ============ AUTO-LOAD ON PAGE INIT ============
+updateDateDisplay();
 if(navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
     async pos => {
