@@ -29,9 +29,22 @@ const POLLEN_NAMES = {
   mugwort: 'Beifuß', olive: 'Olive', ragweed: 'Ambrosia'
 };
 
+const POLLEN_LEVELS = {
+  keine: 'Keine ✓',
+  sehr_niedrig: 'Sehr niedrig ✓',
+  niedrig: 'Niedrig ✓',
+  mäßig: 'Mäßig ⚠',
+  hoch: 'Hoch ⚠⚠',
+  sehr_hoch: 'Sehr hoch ⚠⚠⚠',
+  null: 'Keine Daten'
+};
+
+const AQI_LEVELS = {
+  getLevel: (aqi) => aqi <= 15 ? 'Gut' : aqi <= 30 ? 'Zufriedenstellend' : aqi <= 55 ? 'Mäßig' : aqi <= 100 ? 'Schlecht' : 'Sehr schlecht'
+};
+
 // ============ STATE ============
 const state = {
-  isLoading: false,
   currentForecastDays: 7,
   currentForecastLat: null,
   currentForecastLon: null,
@@ -269,16 +282,7 @@ async function fetchAndParsePollen(lat, lon) {
 }
 
 function renderAllergy(pollen) {
-  const mapLevel = {
-    keine: 'Keine ✓',
-    sehr_niedrig: 'Sehr niedrig ✓',
-    niedrig: 'Niedrig ✓',
-    mäßig: 'Mäßig ⚠',
-    hoch: 'Hoch ⚠⚠',
-    sehr_hoch: 'Sehr hoch ⚠⚠⚠',
-    null: 'Keine Daten'
-  };
-  const levelText = mapLevel[pollen.level] || 'Unbekannt';
+  const levelText = POLLEN_LEVELS[pollen.level] || 'Unbekannt';
   const typesText = pollen.types?.join(', ') || 'N/A';
   
   const leftHTML = `
@@ -288,7 +292,7 @@ function renderAllergy(pollen) {
   
   let rightHTML = '';
   if(pollen.aqi !== null && pollen.aqi !== undefined) {
-    const aqiLevel = pollen.aqi <= 15 ? 'Gut' : pollen.aqi <= 30 ? 'Zufriedenstellend' : pollen.aqi <= 55 ? 'Mäßig' : pollen.aqi <= 100 ? 'Schlecht' : 'Sehr schlecht';
+    const aqiLevel = AQI_LEVELS.getLevel(pollen.aqi);
     rightHTML = `
       <div class="allergy-aqi-label-top">Luftqualität</div>
       <div class="allergy-aqi-value">${pollen.aqi}</div>
