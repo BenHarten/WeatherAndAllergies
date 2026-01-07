@@ -121,25 +121,61 @@ el('resultsModal').addEventListener('click', e => {
 
 window.addEventListener('keydown', e => { if(e.key === 'Escape') closeForecast(); });
 
+// ============ LOCATION CACHING ============
+function getCachedLocation() {
+  const cached = localStorage.getItem('lastLocation');
+  return cached ? JSON.parse(cached) : null;
+}
+
+function setCachedLocation(lat, lon, name) {
+  localStorage.setItem('lastLocation', JSON.stringify({ lat, lon, name }));
+}
+
 // ============ AUTO-LOAD ON PAGE INIT ============
 updateDateDisplay();
-if(navigator.geolocation) {
+
+// Try to load cached location first
+const cachedLoc = getCachedLocation();
+if(cachedLoc) {
+  loadForLocation(cachedLoc.lat, cachedLoc.lon, cachedLoc.name);
+} else if(navigator.geolocation) {
+  // No cache - wait for geolocation (first visit)
   navigator.geolocation.getCurrentPosition(
     async pos => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
-      // For initial load, skip reverse geocoding to load immediately
-      loadForLocation(lat, lon, 'Aktueller Standort');
-      
-      // Load the actual location name in the background
-      const locationName = await reverseGeocode(lat, lon);
-      if(locationName) {
-        state.currentLocationName = locationName;
-        el('locationTitle').textContent = locationName;
-      }
+      const locationName = await reverseGeocode(lat, lon) || 'Aktueller Standort';
+      setCachedLocation(lat, lon, locationName);
+      loadForLocation(lat, lon, locationName);
     },
-    () => loadForLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION)
+    () => {
+      loadForLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION);
+      setCachedLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION);
+    }
   );
 } else {
   loadForLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION);
+  setCachedLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION);
+}
+
+// Update location in background (for repeat visits)
+if(navigator.geolocation && cachedLoc) {
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const locationName = await reverseGeocode(lat, lon) || 'Aktueller Standort';
+      setCachedLocation(lat, lon, locationName);
+      
+      // Update UI if location changed
+      if(lat !== cachedLoc.lat || lon !== cachedLoc.lon) {
+        loadForLocation(lat, lon, locationName);
+      } else if(locationName !== cachedLoc.name) {
+        // Location same, but name might be different
+        state.currentLocationName = locationName;
+        el('locationTitle').textContent = locationName;
+      }
+    }
+    // Silently fail - cached location is still valid
+  );
 }
