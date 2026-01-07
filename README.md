@@ -58,6 +58,90 @@ python3 -m http.server 8000
 # Then open http://localhost:8000 in your browser
 ```
 
+## Mock Mode (Testing)
+
+Mock mode allows you to test the app with predefined weather and pollen data without needing live API calls. Useful for testing different scenarios locally.
+
+### Enable Mock Mode
+
+Choose one of these methods:
+
+**Option 1: URL Parameter**
+```
+http://localhost:8000/?mock=true
+```
+
+**Option 2: Browser Console**
+```javascript
+localStorage.setItem('useMockAPI', 'true');
+// Reload the page
+```
+
+### Available Scenarios
+
+The app comes with 4 pre-built test scenarios:
+
+| Scenario | Weather | Temp | Pollen Level | Use Case |
+|----------|---------|------|--------------|----------|
+| `spring_high_pollen` | Clear (0°C) | 18°C | **High** (birch, grass) | Test high pollen alerts |
+| `winter_low_pollen` | Rainy (61°C) | 5°C | **Low** | Test minimal pollen display |
+| `stormy_moderate_pollen` | Thunderstorm (95°C) | 12°C | **Moderate** | Test storm + moderate pollen |
+| `extreme_pollen` | Cloudy (2°C) | 22°C | **Very High** (all types) | Test worst-case scenario |
+
+### Debug Commands
+
+When mock mode is enabled, use these commands in the browser console:
+
+```javascript
+// Show all available scenarios
+debugApp.scenarios()
+
+// Switch to a specific scenario (instantly reloads data)
+debugApp.switchScenario('winter_low_pollen')
+
+// Check current mock status
+debugApp.status()
+
+// View current mock data as JSON
+debugApp.data()
+
+// Enable/disable mock mode
+debugApp.enableMock()
+debugApp.disableMock()
+
+// Show help
+debugApp.help()
+```
+
+### Customizing Mock Data
+
+Edit mock scenarios in `js/mock-data.js`:
+
+```javascript
+const MOCK_SCENARIOS = {
+  spring_high_pollen: {
+    weather: {
+      current_weather: {
+        weathercode: 0,        // See WEATHER_CODES in data.js
+        temperature: 18,
+        windspeed: 12,
+        winddirection: 45
+      }
+    },
+    pollen: {
+      hourly: {
+        alder_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(45)),
+        birch_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(120)),
+        // ... more pollen types
+        european_aqi: Array(24).fill(null, 0, 18).concat([45, 48, 50, 52, 50, 48])
+      }
+    }
+  }
+}
+```
+
+To add a new scenario, just add a new object to `MOCK_SCENARIOS` with the same structure.
+
 ## API Details
 
 ### Open-Meteo (Weather)
