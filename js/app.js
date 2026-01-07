@@ -123,8 +123,15 @@ if(navigator.geolocation) {
     async pos => {
       const lat = pos.coords.latitude;
       const lon = pos.coords.longitude;
-      const locationName = await reverseGeocode(lat, lon) || 'Aktueller Standort';
-      loadForLocation(lat, lon, locationName);
+      // For initial load, skip reverse geocoding to load immediately
+      loadForLocation(lat, lon, 'Aktueller Standort');
+      
+      // Load the actual location name in the background
+      const locationName = await reverseGeocode(lat, lon);
+      if(locationName) {
+        state.currentLocationName = locationName;
+        el('locationTitle').textContent = locationName;
+      }
     },
     () => loadForLocation(CONFIG.DEFAULT_LAT, CONFIG.DEFAULT_LON, CONFIG.DEFAULT_LOCATION)
   );
