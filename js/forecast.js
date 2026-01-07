@@ -64,6 +64,8 @@ async function renderForecastDays(lat, lon, days) {
     const html = data.daily.time.map((date, i) => {
       const code = data.daily.weather_code[i];
       const desc = WEATHER_CODES[code] || 'Unbekannt';
+      const icon = WEATHER_ICONS[code] || '❓';
+      
       const max = Math.round(data.daily.temperature_2m_max[i]);
       const min = Math.round(data.daily.temperature_2m_min[i]);
       
@@ -75,6 +77,7 @@ async function renderForecastDays(lat, lon, days) {
         <div class="forecast-day">
           <div class="forecast-day-left">
             <div class="forecast-day-date">${dayName} · ${dayDate}</div>
+            <div class="forecast-day-icon">${icon}</div>
             <div class="forecast-day-desc">${desc}</div>
           </div>
           <div class="forecast-day-right">

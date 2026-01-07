@@ -29,6 +29,7 @@ button:active{opacity:0.85}
 .weather-right{display:flex;align-items:center}
 .weather-condition{color:var(--muted);font-size:14px}
 .weather-wind{color:var(--muted);font-size:14px}
+.weather-icon{font-size:48px;line-height:1}
 .weather-temp{font-size:36px;font-weight:600;color:#e6eef8}
 .footer{margin-top:22px;color:var(--muted);text-align:center;font-size:12px}
 
@@ -44,6 +45,7 @@ button:active{opacity:0.85}
 .forecast-day:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2)}
 .forecast-day-left{display:flex;flex-direction:column;gap:4px;flex:1}
 .forecast-day-date{font-weight:600;color:#7dd3fc;font-size:16px}
+.forecast-day-icon{font-size:32px;line-height:1}
 .forecast-day-desc{color:#b6c2d8;font-size:14px}
 .forecast-day-right{display:flex;gap:20px;align-items:center}
 .forecast-day-temp{display:flex;gap:16px;font-size:16px}
