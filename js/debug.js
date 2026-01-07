@@ -22,6 +22,9 @@ const debugApp = {
     if(state.currentForecastLat && state.currentForecastLon) {
       console.log(`Switching to scenario: ${scenarioName}`);
       await loadForLocation(state.currentForecastLat, state.currentForecastLon, state.currentLocationName);
+      console.log(`✓ Scenario switched to: ${scenarioName}`);
+    } else {
+      console.log(`✓ Scenario switched to: ${scenarioName} (no location loaded yet)`);
     }
   },
 

@@ -3,7 +3,12 @@ const CONFIG = {
   GEOAPIFY_KEY: '308aa1f469dd4868b6676fc094a5a6d2',
   DEFAULT_LAT: 52.52,
   DEFAULT_LON: 13.405,
-  DEFAULT_LOCATION: 'Berlin'
+  DEFAULT_LOCATION: 'Berlin',
+  // Time constants (milliseconds)
+  MS_PER_DAY: 86400000,
+  // Forecast configuration
+  INITIAL_FORECAST_DAYS: 7,
+  MAX_FORECAST_DAYS: 16
 };
 
 const APIS = {
@@ -11,5 +16,5 @@ const APIS = {
   geoapifyReverse: (lat, lon) => `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&apiKey=${CONFIG.GEOAPIFY_KEY}`,
   openMeteoWeather: (lat, lon) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=Europe%2FBerlin`,
   openMeteoPollen: (lat, lon) => `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen,european_aqi&timezone=Europe%2FBerlin`,
-  openMeteoForecast: (lat, lon, days) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=${days}`
+  openMeteoForecast: (lat, lon, days) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=weather_code,temperature_2m,precipitation,wind_speed_10m&timezone=Europe%2FBerlin&forecast_days=${days}`
 };

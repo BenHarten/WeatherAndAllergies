@@ -26,3 +26,16 @@ function renderCard(elementId, leftHTML, rightHTML, containerClass) {
     </div>
   `;
 }
+
+// Date formatting helpers
+function formatDayName(date) {
+  return new Date(date).toLocaleDateString('de-DE', {weekday: 'long'});
+}
+
+function formatDayDate(date) {
+  return new Date(date).toLocaleDateString('de-DE', {month: 'long', day: 'numeric'});
+}
+
+function formatDayShort(date) {
+  return new Date(date).toLocaleDateString('de-DE', {month: 'numeric', day: 'numeric'});
+}

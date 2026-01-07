@@ -24,8 +24,9 @@ if(MOCK_MODE) {
 
     // Intercept Open-Meteo forecast API
     if(url.includes('open-meteo.com') && url.includes('forecast')) {
+      const mockForecast = getMockForecastForScenario(CURRENT_MOCK_SCENARIO);
       return Promise.resolve(
-        new Response(JSON.stringify(MOCK_FORECAST), { status: 200 })
+        new Response(JSON.stringify(mockForecast), { status: 200 })
       );
     }
 
@@ -34,31 +35,21 @@ if(MOCK_MODE) {
       const queryMatch = url.match(/text=([^&]+)/);
       const query = queryMatch ? decodeURIComponent(queryMatch[1]) : '';
       
-      mockGeocodeMultiple(query).then(results => {
-        const response = {
-          features: results.map(r => ({
-            geometry: { coordinates: [r.lon, r.lat] },
-            properties: { formatted: r.display_name }
-          }))
-        };
-        return Promise.resolve(
-          new Response(JSON.stringify(response), { status: 200 })
-        );
-      });
-
-      // Create and return a resolved promise with mock data
-      const results = [];
-      for(let [key, value] of Object.entries({
+      // Find matching location from predefined cities
+      const locations = {
         'Berlin': getCurrentMockScenario().geocode,
         'Munich': { lat: 48.1351, lon: 11.5820, display_name: 'München, Deutschland' },
         'Hamburg': { lat: 53.5511, lon: 9.9937, display_name: 'Hamburg, Deutschland' }
-      })) {
+      };
+      
+      let results = [];
+      for(let [key, value] of Object.entries(locations)) {
         if(query.toLowerCase().includes(key.toLowerCase())) {
           results.push(value);
           break;
         }
       }
-
+      
       if(results.length === 0) {
         results.push(getCurrentMockScenario().geocode);
       }

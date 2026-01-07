@@ -41,8 +41,8 @@ button:active{opacity:0.85}
 .forecast-close{background:0;border:0;color:#b6c2d8;font-size:32px;cursor:pointer;padding:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;transition:color 0.2s}
 .forecast-close:hover{color:#e6eef8}
 .forecast-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
-.forecast-day{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;transition:all 0.2s}
-.forecast-day:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2)}
+.forecast-day{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;transition:all 0.2s;cursor:pointer}
+.forecast-day:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);transform:translateY(-2px)}
 .forecast-day-left{display:flex;flex-direction:column;gap:4px;flex:1}
 .forecast-day-date{font-weight:600;color:#7dd3fc;font-size:16px}
 .forecast-day-icon{font-size:32px;line-height:1}
@@ -62,6 +62,19 @@ button:active{opacity:0.85}
 .result-item-name{font-weight:600;color:#7dd3fc;font-size:16px;margin-bottom:4px}
 .result-item-detail{color:#b6c2d8;font-size:13px}
 .forecast-load-more:disabled{opacity:0.5;cursor:not-allowed}
+
+/* Hourly Forecast */
+.hourly-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;transition:background 0.2s,border-color 0.2s;cursor:default}
+.hourly-item:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15)}
+.hourly-item.hourly-current{background:rgba(125,211,252,0.15);border-color:#7dd3fc;box-shadow:0 0 12px rgba(125,211,252,0.3)}
+.hourly-left{display:flex;flex-direction:column;gap:4px;flex:1}
+.hourly-time{font-weight:600;color:#7dd3fc;font-size:14px}
+.hourly-item.hourly-current .hourly-time{color:#06b6d4;font-weight:700}
+.hourly-icon{font-size:24px;line-height:1}
+.hourly-desc{color:#b6c2d8;font-size:12px}
+.hourly-right{display:flex;gap:16px;align-items:center}
+.hourly-temp{font-size:20px;font-weight:600;color:#e6eef8}
+.hourly-meta{color:#b6c2d8;font-size:12px;white-space:nowrap}
 
 /* Allergy/Pollen Styling */
 .allergy-container{display:flex;justify-content:space-between;align-items:center;gap:16px}
