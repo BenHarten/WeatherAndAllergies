@@ -12,7 +12,7 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(
 .site-header{padding:28px 0 0 0;text-align:left}
 .site-header h1{margin:0;font-size:28px;letter-spacing:-0.5px}
 .tagline{margin:6px 0 0;color:var(--muted);font-size:14px}
-.location-display{margin:24px 0 16px;padding:8px 0;display:flex;align-items:baseline;gap:12px}
+.location-display{margin:8px 0 16px;padding:8px 0;display:flex;align-items:baseline;gap:12px}
 .location-display h2{margin:0;font-size:16px;color:var(--muted);font-weight:400}
 .location-date{color:var(--muted);font-size:14px}
 .controls .row{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
@@ -99,7 +99,7 @@ button:active{opacity:0.85}
 
 @media (max-width:480px){
   .container{padding:12px}
-  .site-header{padding:16px 0}
+  .site-header{padding:16px 0 0 0}
   .site-header h1{font-size:20px}
   .tagline{font-size:12px}
   .controls .row{flex-direction:column}

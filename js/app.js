@@ -75,6 +75,11 @@ async function useGeolocation() {
   const btn = el('geoBtn');
   setButtonState(btn, true, '0.6');
   
+  // Clear UI immediately to show loading state
+  el('locationTitle').textContent = 'Standort wird bestimmt…';
+  el('weatherContent').innerHTML = `<p class="muted">Lade Wetter…</p>`;
+  el('allergyContent').innerHTML = `<p class="muted">Lade Polleninformationen…</p>`;
+  
   try {
     if(!navigator.geolocation) {
       showError('Geolocation nicht verfügbar');
