@@ -13,21 +13,33 @@ async function loadForLocation(lat, lon, label) {
   state.currentLocationName = label;
   
   el('locationTitle').textContent = label;
-  el('weatherContent').innerHTML = `<p class="muted">Lade Wetter für ${label}…</p>`;
+  el('weatherContent').innerHTML = `<p class="muted">Lade Wetter…</p>`;
   el('allergyContent').innerHTML = `<p class="muted">Lade Polleninformationen…</p>`;
 
+  // Load weather and pollen in parallel instead of sequentially
   try {
-    const weather = await getCachedFetch(APIS.openMeteoWeather(lat, lon));
+    const [weather, pollen] = await Promise.all([
+      getCachedFetch(APIS.openMeteoWeather(lat, lon)),
+      fetchAndParsePollen(lat, lon)
+    ]);
+    
     renderWeather(weather, label);
-  } catch(e) {
-    showError('Wetterdaten konnten nicht geladen werden.');
-  }
-
-  try {
-    const pollen = await fetchAndParsePollen(lat, lon);
     renderAllergy(pollen);
   } catch(e) {
-    el('allergyContent').innerHTML = `<p class="muted">Polleninformationen nicht verfügbar.</p>`;
+    // Try loading them individually if parallel fails
+    try {
+      const weather = await getCachedFetch(APIS.openMeteoWeather(lat, lon));
+      renderWeather(weather, label);
+    } catch(e) {
+      showError('Wetterdaten konnten nicht geladen werden.');
+    }
+
+    try {
+      const pollen = await fetchAndParsePollen(lat, lon);
+      renderAllergy(pollen);
+    } catch(e) {
+      el('allergyContent').innerHTML = `<p class="muted">Polleninformationen nicht verfügbar.</p>`;
+    }
   }
 }
 
