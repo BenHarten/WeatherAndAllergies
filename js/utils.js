@@ -39,3 +39,27 @@ function formatDayDate(date) {
 function formatDayShort(date) {
   return new Date(date).toLocaleDateString('de-DE', {month: 'numeric', day: 'numeric'});
 }
+
+// Simple API response caching
+const apiCache = {};
+
+function getCachedFetch(url, ttl = CONFIG.CACHE_TTL) {
+  const now = Date.now();
+  const cached = apiCache[url];
+  
+  // Return cached data if still fresh
+  if(cached && (now - cached.timestamp) < ttl) {
+    return Promise.resolve(cached.data);
+  }
+  
+  // Fetch fresh data and cache it
+  return fetch(url)
+    .then(response => {
+      if(!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      apiCache[url] = { data, timestamp: now };
+      return data;
+    });
+}

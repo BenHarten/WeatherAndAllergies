@@ -19,10 +19,27 @@ async function showForecast(lat, lon) {
   // Fetch and store the data for hourly forecasts
   await fetchAndStoreForecastData(lat, lon, 7);
   await renderForecastDays(lat, lon, 7);
+  
+  // Reset scroll to top on the modal content container
+  const modalContent = el('forecastModal').querySelector('.forecast-modal-content');
+  modalContent.scrollTop = 0;
 }
 
 function closeForecast() {
   el('forecastModal').style.display = 'none';
+  
+  // Reset forecast state to initial daily view
+  forecastState.isViewingHourly = false;
+  forecastState.hourlyDate = null;
+  
+  // Reset UI elements to initial state
+  el('forecastBack').style.display = 'none';
+  el('forecastFooter').style.display = 'flex';
+  el('forecastTitle').textContent = `Vorhersage für ${state.currentLocationName}`;
+  
+  // Scroll modal content to top
+  const modalContent = el('forecastModal').querySelector('.forecast-modal-content');
+  modalContent.scrollTop = 0;
 }
 
 function showResultsModal(results) {
@@ -68,10 +85,7 @@ async function loadMoreForecastDays() {
 
 async function renderForecastDays(lat, lon, days) {
   try {
-    const res = await fetch(APIS.openMeteoForecast(lat, lon, days));
-    if(!res.ok) throw new Error('forecast failed');
-    
-    const data = await res.json();
+    const data = await getCachedFetch(APIS.openMeteoForecast(lat, lon, days));
     const html = data.daily.time.map((date, i) => {
       const code = data.daily.weather_code[i];
       const {icon, description: desc} = getWeatherInfo(code);
@@ -122,9 +136,7 @@ const forecastState = {
 
 async function fetchAndStoreForecastData(lat, lon, days) {
   try {
-    const res = await fetch(APIS.openMeteoForecast(lat, lon, days));
-    if(!res.ok) return null;
-    const data = await res.json();
+    const data = await getCachedFetch(APIS.openMeteoForecast(lat, lon, days));
     forecastState.data = data;
     return data;
   } catch(e) {

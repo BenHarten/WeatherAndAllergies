@@ -8,7 +8,9 @@ const CONFIG = {
   MS_PER_DAY: 86400000,
   // Forecast configuration
   INITIAL_FORECAST_DAYS: 7,
-  MAX_FORECAST_DAYS: 16
+  MAX_FORECAST_DAYS: 16,
+  // API caching (1 hour)
+  CACHE_TTL: 3600000
 };
 
 const APIS = {

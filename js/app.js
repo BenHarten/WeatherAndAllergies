@@ -17,7 +17,7 @@ async function loadForLocation(lat, lon, label) {
   el('allergyContent').innerHTML = `<p class="muted">Lade Polleninformationen…</p>`;
 
   try {
-    const weather = await fetch(APIS.openMeteoWeather(lat, lon)).then(r => r.json());
+    const weather = await getCachedFetch(APIS.openMeteoWeather(lat, lon));
     renderWeather(weather, label);
   } catch(e) {
     showError('Wetterdaten konnten nicht geladen werden.');

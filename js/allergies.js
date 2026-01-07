@@ -1,16 +1,11 @@
 // ============ POLLEN/ALLERGIES (OPEN-METEO) ============
 async function fetchAndParsePollen(lat, lon) {
   const url = APIS.openMeteoPollen(lat, lon);
-  const res = await fetch(url);
   
-  if(!res.ok) {
-    console.error(`Pollen API error: ${res.status} ${res.statusText}`);
-    throw new Error(`pollen failed: ${res.status}`);
-  }
-  
-  const data = await res.json();
-  
-  if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar']};
+  try {
+    const data = await getCachedFetch(url);
+    if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar']};
+
   
   // Extract latest values for each pollen type
   const values = {
@@ -48,7 +43,11 @@ async function fetchAndParsePollen(lat, lon) {
   else if(maxVal <= 150) level = 'hoch';
   else level = 'sehr_hoch';
   
-  return {level, types: domTypes.length > 0 ? domTypes : ['Keine'], aqi};
+    return {level, types: domTypes.length > 0 ? domTypes : ['Keine'], aqi};
+  } catch(e) {
+    console.error('Pollen API error:', e);
+    throw e;
+  }
 }
 
 function renderAllergy(pollen) {
