@@ -14,6 +14,21 @@ function generateForecastDates() {
   return dates;
 }
 
+// Helper to generate hourly times for 7 days
+function generateHourlyTimes(days = 7) {
+  const times = [];
+  const now = new Date();
+  for(let day = 0; day < days; day++) {
+    for(let hour = 0; hour < 24; hour++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + day);
+      date.setHours(hour, 0, 0, 0);
+      times.push(date.toISOString());
+    }
+  }
+  return times;
+}
+
 // Mock scenarios - easily customizable for testing
 const MOCK_SCENARIOS = {
   // Scenario 1: High pollen, clear weather (spring)
@@ -28,13 +43,14 @@ const MOCK_SCENARIOS = {
     },
     pollen: {
       hourly: {
-        alder_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(45)),
-        birch_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(120)),
-        grass_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(85)),
-        mugwort_pollen: Array(24).fill(0),
-        ragweed_pollen: Array(24).fill(0),
-        olive_pollen: Array(24).fill(0),
-        european_aqi: Array(24).fill(null, 0, 18).concat([45, 48, 50, 52, 50, 48])
+        time: generateHourlyTimes(7),
+        alder_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(45)).concat(Array(144).fill(35)),
+        birch_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(120)).concat(Array(144).fill(80)),
+        grass_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(85)).concat(Array(144).fill(60)),
+        mugwort_pollen: Array(168).fill(0),
+        ragweed_pollen: Array(168).fill(0),
+        olive_pollen: Array(168).fill(0),
+        european_aqi: Array(18).fill(null).concat([45, 48, 50, 52, 50, 48]).concat(Array(144).fill(42))
       }
     },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
@@ -62,13 +78,14 @@ const MOCK_SCENARIOS = {
     },
     pollen: {
       hourly: {
-        alder_pollen: Array(24).fill(0),
-        birch_pollen: Array(24).fill(0),
-        grass_pollen: Array(24).fill(2),
-        mugwort_pollen: Array(24).fill(0),
-        ragweed_pollen: Array(24).fill(0),
-        olive_pollen: Array(24).fill(0),
-        european_aqi: Array(24).fill(null, 0, 18).concat([22, 24, 25, 24, 23, 22])
+        time: generateHourlyTimes(7),
+        alder_pollen: Array(168).fill(0),
+        birch_pollen: Array(168).fill(0),
+        grass_pollen: Array(168).fill(2),
+        mugwort_pollen: Array(168).fill(0),
+        ragweed_pollen: Array(168).fill(0),
+        olive_pollen: Array(168).fill(0),
+        european_aqi: Array(18).fill(null).concat([22, 24, 25, 24, 23, 22]).concat(Array(144).fill(23))
       }
     },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
@@ -96,13 +113,14 @@ const MOCK_SCENARIOS = {
     },
     pollen: {
       hourly: {
-        alder_pollen: Array(24).fill(30),
-        birch_pollen: Array(24).fill(55),
-        grass_pollen: Array(24).fill(40),
-        mugwort_pollen: Array(24).fill(15),
-        ragweed_pollen: Array(24).fill(8),
-        olive_pollen: Array(24).fill(0),
-        european_aqi: Array(24).fill(null, 0, 18).concat([65, 68, 70, 68, 65, 62])
+        time: generateHourlyTimes(7),
+        alder_pollen: Array(168).fill(30),
+        birch_pollen: Array(168).fill(55),
+        grass_pollen: Array(168).fill(40),
+        mugwort_pollen: Array(168).fill(15),
+        ragweed_pollen: Array(168).fill(8),
+        olive_pollen: Array(168).fill(0),
+        european_aqi: Array(18).fill(null).concat([65, 68, 70, 68, 65, 62]).concat(Array(144).fill(65))
       }
     },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
@@ -130,13 +148,14 @@ const MOCK_SCENARIOS = {
     },
     pollen: {
       hourly: {
-        alder_pollen: Array(24).fill(180),
-        birch_pollen: Array(24).fill(250),
-        grass_pollen: Array(24).fill(200),
-        mugwort_pollen: Array(24).fill(120),
-        ragweed_pollen: Array(24).fill(95),
-        olive_pollen: Array(24).fill(60),
-        european_aqi: Array(24).fill(null, 0, 18).concat([120, 125, 130, 128, 125, 122])
+        time: generateHourlyTimes(7),
+        alder_pollen: Array(168).fill(180),
+        birch_pollen: Array(168).fill(250),
+        grass_pollen: Array(168).fill(200),
+        mugwort_pollen: Array(168).fill(120),
+        ragweed_pollen: Array(168).fill(95),
+        olive_pollen: Array(168).fill(60),
+        european_aqi: Array(18).fill(null).concat([120, 125, 130, 128, 125, 122]).concat(Array(144).fill(125))
       }
     },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },

@@ -31,6 +31,7 @@ function closeForecast() {
   // Reset forecast state to initial daily view
   forecastState.isViewingHourly = false;
   forecastState.hourlyDate = null;
+  forecastState.isAllergyView = false;
   
   // Reset UI elements to initial state
   el('forecastBack').style.display = 'none';
@@ -69,6 +70,12 @@ async function selectResult(lat, lon, display_name) {
 }
 
 async function loadMoreForecastDays() {
+  // Check if we're viewing allergy forecast
+  if(forecastState.isAllergyView) {
+    await loadMoreAllergyDays();
+    return;
+  }
+  
   const newDays = Math.min(state.currentForecastDays + 7, 16);
   if(newDays === state.currentForecastDays) return;
   
@@ -134,7 +141,8 @@ async function renderForecastDays(lat, lon, days) {
 const forecastState = {
   data: null,
   isViewingHourly: false,
-  hourlyDate: null
+  hourlyDate: null,
+  isAllergyView: false
 };
 
 async function fetchAndStoreForecastData(lat, lon, days) {

@@ -91,6 +91,16 @@ button:active{opacity:0.85}
 .card{cursor:pointer}
 .card:hover{transform:translateY(-2px)}
 
+/* Allergy Forecast */
+.allergy-forecast-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.2s}
+.allergy-forecast-left{display:flex;flex-direction:column;gap:4px;flex:1}
+.allergy-forecast-date{font-weight:600;color:#7dd3fc;font-size:14px}
+.allergy-forecast-level{color:#e6eef8;font-size:16px;font-weight:600}
+.allergy-forecast-types{color:#b6c2d8;font-size:13px}
+.allergy-forecast-right{display:flex;flex-direction:column;align-items:center;gap:4px}
+.allergy-forecast-aqi{font-size:36px;font-weight:600;color:#e6eef8}
+.allergy-forecast-aqi-label{color:#b6c2d8;font-size:12px;white-space:nowrap}
+
 @media (max-width:768px){
   .container{padding:16px}
   .site-header h1{font-size:24px}

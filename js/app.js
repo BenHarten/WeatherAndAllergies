@@ -106,6 +106,7 @@ async function useGeolocation() {
 el('searchBtn').addEventListener('click', onSearch);
 el('geoBtn').addEventListener('click', useGeolocation);
 el('weatherCard').addEventListener('click', () => showForecast(state.currentForecastLat, state.currentForecastLon));
+el('allergyCard').addEventListener('click', () => showAllergyForecast(state.currentForecastLat, state.currentForecastLon));
 el('forecastClose').addEventListener('click', closeForecast);
 el('forecastBack').addEventListener('click', backToForecast);
 el('forecastLoadMore').addEventListener('click', loadMoreForecastDays);
