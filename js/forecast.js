@@ -92,6 +92,8 @@ async function renderForecastDays(lat, lon, days) {
       
       const max = Math.round(data.daily.temperature_2m_max[i]);
       const min = Math.round(data.daily.temperature_2m_min[i]);
+      const precipProb = data.daily.precipitation_probability_max?.[i] || 0;
+      const windSpeed = Math.round(data.daily.wind_speed_10m_max?.[i] || 0);
       
       const dayName = formatDayName(date);
       const dayDate = formatDayShort(date);
@@ -101,13 +103,14 @@ async function renderForecastDays(lat, lon, days) {
           <div class="forecast-day-left">
             <div class="forecast-day-date">${dayName} · ${dayDate}</div>
             <div class="forecast-day-icon">${icon}</div>
-            <div class="forecast-day-desc">${desc}</div>
+          </div>
+          <div class="forecast-day-temp">
+            <div class="forecast-day-max">↑ ${max}°</div>
+            <div class="forecast-day-min">↓ ${min}°</div>
           </div>
           <div class="forecast-day-right">
-            <div class="forecast-day-temp">
-              <div class="forecast-day-max">↑ ${max}°</div>
-              <div class="forecast-day-min">↓ ${min}°</div>
-            </div>
+            <div class="forecast-day-meta">💧 ${precipProb}%</div>
+            <div class="forecast-day-meta">💨 ${windSpeed} km/h</div>
           </div>
         </div>
       `;
@@ -177,7 +180,7 @@ async function showHourlyForecast(dateStr) {
     const code = data.hourly.weather_code[i];
     const {icon, description: desc} = getWeatherInfo(code);
     const temp = Math.round(data.hourly.temperature_2m[i]);
-    const precip = data.hourly.precipitation[i] || 0;
+    const precipProb = data.hourly.precipitation_probability[i] || 0;
     const wind = Math.round(data.hourly.wind_speed_10m[i]);
     const isCurrentHour = isToday && hour === currentHour;
     
@@ -186,11 +189,11 @@ async function showHourlyForecast(dateStr) {
         <div class="hourly-left">
           <div class="hourly-time">${hour.toString().padStart(2, '0')}:00</div>
           <div class="hourly-icon">${icon}</div>
-          <div class="hourly-desc">${desc}</div>
         </div>
+        <div class="hourly-temp">${temp}°</div>
         <div class="hourly-right">
-          <div class="hourly-temp">${temp}°</div>
-          <div class="hourly-meta">💧 ${precip.toFixed(1)}mm &nbsp; 💨 ${wind}km/h</div>
+          <div class="hourly-meta">💧 ${precipProb}%</div>
+          <div class="hourly-meta">💨 ${wind} km/h</div>
         </div>
       </div>
     `;

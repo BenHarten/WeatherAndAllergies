@@ -8,20 +8,17 @@ function degreeToCompass(degrees) {
 function renderWeather(data, label) {
   const cur = data.current_weather;
   const code = cur.weathercode;
-  const desc = WEATHER_CODES[code] || 'Unbekannt';
   const icon = WEATHER_ICONS[code] || '❓';
-  
   const windDirection = degreeToCompass(cur.winddirection);
   
   const leftHTML = `
     <div class="weather-icon">${icon}</div>
-    <div>
-      <div class="weather-condition">${desc}</div>
-      <div class="weather-wind">Wind ${Math.round(cur.windspeed)} km/h · ${windDirection} (${Math.round(cur.winddirection)}°)</div>
-    </div>
   `;
   
-  const rightHTML = `<div class="weather-temp">${Math.round(cur.temperature)}°C</div>`;
+  const rightHTML = `
+    <div class="weather-temp">${Math.round(cur.temperature)}°C</div>
+    <div class="weather-wind">Wind ${Math.round(cur.windspeed)} km/h</div>
+  `;
   
   renderCard('weatherContent', leftHTML, rightHTML, 'weather');
 }

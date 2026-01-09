@@ -43,7 +43,9 @@ const MOCK_SCENARIOS = {
         time: generateForecastDates(),
         weather_code: [0, 1, 2, 1, 0, 1, 0],
         temperature_2m_max: [22, 21, 19, 20, 23, 22, 24],
-        temperature_2m_min: [15, 14, 12, 13, 16, 15, 17]
+        temperature_2m_min: [15, 14, 12, 13, 16, 15, 17],
+        precipitation_probability_max: [10, 20, 30, 15, 5, 10, 0],
+        wind_speed_10m_max: [15, 18, 22, 17, 12, 14, 10]
       }
     }
   },
@@ -75,7 +77,9 @@ const MOCK_SCENARIOS = {
         time: generateForecastDates(),
         weather_code: [61, 63, 63, 80, 81, 61, 61],
         temperature_2m_max: [6, 5, 4, 5, 7, 8, 9],
-        temperature_2m_min: [2, 1, 0, 2, 3, 4, 5]
+        temperature_2m_min: [2, 1, 0, 2, 3, 4, 5],
+        precipitation_probability_max: [85, 95, 90, 80, 70, 85, 80],
+        wind_speed_10m_max: [35, 40, 38, 32, 28, 36, 34]
       }
     }
   },
@@ -107,7 +111,9 @@ const MOCK_SCENARIOS = {
         time: generateForecastDates(),
         weather_code: [95, 80, 80, 61, 2, 1, 0],
         temperature_2m_max: [13, 11, 10, 12, 15, 18, 20],
-        temperature_2m_min: [9, 8, 7, 8, 10, 12, 14]
+        temperature_2m_min: [9, 8, 7, 8, 10, 12, 14],
+        precipitation_probability_max: [100, 90, 85, 60, 40, 20, 10],
+        wind_speed_10m_max: [55, 48, 45, 35, 25, 20, 15]
       }
     }
   },
@@ -139,7 +145,9 @@ const MOCK_SCENARIOS = {
         time: generateForecastDates(),
         weather_code: [2, 2, 1, 0, 2, 1, 0],
         temperature_2m_max: [25, 24, 23, 24, 26, 25, 27],
-        temperature_2m_min: [19, 18, 17, 18, 20, 19, 21]
+        temperature_2m_min: [19, 18, 17, 18, 20, 19, 21],
+        precipitation_probability_max: [30, 35, 25, 10, 40, 20, 5],
+        wind_speed_10m_max: [18, 20, 16, 12, 22, 15, 10]
       }
     }
   }
@@ -153,7 +161,7 @@ function generateMockHourlyData() {
   const hourlyTime = [];
   const weatherCodes = [];
   const temperatures = [];
-  const precipitation = [];
+  const precipitationProbability = [];
   const windSpeeds = [];
   
   // Constants for hourly generation
@@ -166,7 +174,7 @@ function generateMockHourlyData() {
   const DAYTIME_WIND = 5;
   const NIGHTTIME_WIND = 15;
   const MAX_WIND_VARIATION = 5;
-  const MAX_PRECIP = 2;
+  const MAX_PRECIP_PROB = 90;
   const TEMP_AMPLITUDE = 5;
   const NIGHT_TEMP_OFFSET = -3;
   
@@ -193,8 +201,8 @@ function generateMockHourlyData() {
       const tempVariation = isDay ? Math.sin((hour - SUNRISE_HOUR) / 12 * Math.PI) * TEMP_AMPLITUDE : NIGHT_TEMP_OFFSET;
       temperatures.push(Math.round(baseTemp + tempVariation));
       
-      // Precipitation on rainy days
-      precipitation.push((day === RAINY_DAY_1 || day === RAINY_DAY_2) && isDay ? Math.random() * MAX_PRECIP : 0);
+      // Precipitation probability on rainy days
+      precipitationProbability.push((day === RAINY_DAY_1 || day === RAINY_DAY_2) && isDay ? Math.round(Math.random() * MAX_PRECIP_PROB + 10) : Math.round(Math.random() * 20));
       
       // Wind speeds (higher at night)
       windSpeeds.push(Math.round(10 + (isDay ? DAYTIME_WIND : NIGHTTIME_WIND) + Math.random() * MAX_WIND_VARIATION));
@@ -205,7 +213,7 @@ function generateMockHourlyData() {
     time: hourlyTime,
     weather_code: weatherCodes,
     temperature_2m: temperatures,
-    precipitation: precipitation,
+    precipitation_probability: precipitationProbability,
     wind_speed_10m: windSpeeds
   };
 }

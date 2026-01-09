@@ -24,11 +24,11 @@ button:active{opacity:0.85}
 .card h2{margin:0 0 10px;font-size:18px}
 .content p{margin:0;color:var(--muted)}
 .muted{color:var(--muted)}
-.weather-container{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.weather-container{display:flex;justify-content:space-between;align-items:center;gap:16px}
 .weather-left{flex:1;display:flex;flex-direction:column;gap:6px}
-.weather-right{display:flex;align-items:center}
+.weather-right{display:flex;flex-direction:column;align-items:center;gap:4px}
 .weather-condition{color:var(--muted);font-size:14px}
-.weather-wind{color:var(--muted);font-size:14px}
+.weather-wind{color:var(--muted);font-size:13px;white-space:nowrap}
 .weather-icon{font-size:48px;line-height:1}
 .weather-temp{font-size:36px;font-weight:600;color:#e6eef8}
 .footer{margin-top:22px;color:var(--muted);text-align:center;font-size:12px}
@@ -41,16 +41,17 @@ button:active{opacity:0.85}
 .forecast-close{background:0;border:0;color:#b6c2d8;font-size:32px;cursor:pointer;padding:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;transition:color 0.2s}
 .forecast-close:hover{color:#e6eef8}
 .forecast-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
-.forecast-day{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;transition:all 0.2s;cursor:pointer}
+.forecast-day{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.2s;cursor:pointer}
 .forecast-day:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);transform:translateY(-2px)}
 .forecast-day-left{display:flex;flex-direction:column;gap:4px;flex:1}
 .forecast-day-date{font-weight:600;color:#7dd3fc;font-size:16px}
 .forecast-day-icon{font-size:32px;line-height:1}
 .forecast-day-desc{color:#b6c2d8;font-size:14px}
-.forecast-day-right{display:flex;gap:20px;align-items:center}
-.forecast-day-temp{display:flex;gap:16px;font-size:16px}
-.forecast-day-max{color:#f87171;font-weight:600}
-.forecast-day-min{color:#60a5fa}
+.forecast-day-temp{display:flex;flex-direction:column;gap:4px;align-items:center;flex-shrink:0}
+.forecast-day-max{color:#f87171;font-weight:600;font-size:18px}
+.forecast-day-min{color:#60a5fa;font-size:18px}
+.forecast-day-right{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
+.forecast-day-meta{color:#b6c2d8;font-size:13px;white-space:nowrap}
 .forecast-footer{display:flex;justify-content:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)}
 .forecast-load-more{background:linear-gradient(90deg,#7dd3fc,#60a5fa);border:0;color:#072030;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:500;transition:all 0.2s}
 .forecast-load-more:hover{opacity:0.9;transform:translateY(-2px)}
@@ -64,7 +65,7 @@ button:active{opacity:0.85}
 .forecast-load-more:disabled{opacity:0.5;cursor:not-allowed}
 
 /* Hourly Forecast */
-.hourly-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;transition:background 0.2s,border-color 0.2s;cursor:default}
+.hourly-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:background 0.2s,border-color 0.2s;cursor:default}
 .hourly-item:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15)}
 .hourly-item.hourly-current{background:rgba(125,211,252,0.15);border-color:#7dd3fc;box-shadow:0 0 12px rgba(125,211,252,0.3)}
 .hourly-left{display:flex;flex-direction:column;gap:4px;flex:1}
@@ -72,9 +73,9 @@ button:active{opacity:0.85}
 .hourly-item.hourly-current .hourly-time{color:#06b6d4;font-weight:700}
 .hourly-icon{font-size:24px;line-height:1}
 .hourly-desc{color:#b6c2d8;font-size:12px}
-.hourly-right{display:flex;gap:16px;align-items:center}
-.hourly-temp{font-size:20px;font-weight:600;color:#e6eef8}
-.hourly-meta{color:#b6c2d8;font-size:12px;white-space:nowrap}
+.hourly-temp{font-size:24px;font-weight:600;color:#e6eef8;flex-shrink:0}
+.hourly-right{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
+.hourly-meta{color:#b6c2d8;font-size:13px;white-space:nowrap}
 
 /* Allergy/Pollen Styling */
 .allergy-container{display:flex;justify-content:space-between;align-items:center;gap:16px}
