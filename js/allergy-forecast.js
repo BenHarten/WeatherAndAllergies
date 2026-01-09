@@ -46,9 +46,9 @@ function getPollenLevelText(value) {
   if(value === 0) return 'Keine ✓';
   else if(value <= 10) return 'Sehr niedrig ✓';
   else if(value <= 30) return 'Niedrig ✓';
-  else if(value <= 80) return 'Mäßig ⚠';
-  else if(value <= 150) return 'Hoch ⚠⚠';
-  else return 'Sehr hoch ⚠⚠⚠';
+  else if(value <= 80) return 'Mäßig';
+  else if(value <= 150) return 'Hoch';
+  else return 'Sehr hoch';
 }
 
 function aggregateDailyPollen(hourlyData, days) {
@@ -138,16 +138,29 @@ async function renderAllergyForecastDays() {
       const dayName = dateObj.toLocaleDateString('de-DE', {weekday: 'long'});
       const dayDate = dateObj.toLocaleDateString('de-DE', {month: 'numeric', day: 'numeric'});
       
+      // Get level key from the level text (e.g., "Keine ✓" -> "keine")
+      let levelKey = 'keine';
+      if(day.maxVal === 0) levelKey = 'keine';
+      else if(day.maxVal <= 10) levelKey = 'sehr_niedrig';
+      else if(day.maxVal <= 30) levelKey = 'niedrig';
+      else if(day.maxVal <= 80) levelKey = 'mäßig';
+      else if(day.maxVal <= 150) levelKey = 'hoch';
+      else levelKey = 'sehr_hoch';
+      
+      const meds = getMedicationRecommendation(levelKey);
+      
       return `
         <div class="allergy-forecast-item">
           <div class="allergy-forecast-left">
             <div class="allergy-forecast-date">${dayName} · ${dayDate}</div>
             <div class="allergy-forecast-level">${day.level}</div>
             <div class="allergy-forecast-types">${day.types.join(', ')}</div>
+            <div style="margin-top:6px;font-size:11px;color:#ddd;font-weight:600;"><strong>${meds.text}</strong></div>
           </div>
           <div class="allergy-forecast-right">
             <div class="allergy-forecast-aqi">${day.aqi}</div>
             <div class="allergy-forecast-aqi-label">Luftqualität</div>
+            <div style="font-size:18px;margin-top:8px;line-height:1;">${meds.icon}</div>
           </div>
         </div>
       `;

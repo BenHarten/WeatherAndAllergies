@@ -44,24 +44,24 @@ const MOCK_SCENARIOS = {
     pollen: {
       hourly: {
         time: generateHourlyTimes(7),
-        alder_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(45)).concat(Array(144).fill(35)),
-        birch_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(120)).concat(Array(144).fill(80)),
-        grass_pollen: Array(24).fill(0, 0, 12).concat(Array(12).fill(85)).concat(Array(144).fill(60)),
-        mugwort_pollen: Array(168).fill(0),
-        ragweed_pollen: Array(168).fill(0),
+        alder_pollen: Array(48).fill(210).concat(Array(24).fill(35)).concat(Array(96).fill(35)),
+        birch_pollen: Array(48).fill(280).concat(Array(24).fill(80)).concat(Array(96).fill(80)),
+        grass_pollen: Array(48).fill(220).concat(Array(24).fill(60)).concat(Array(96).fill(60)),
+        mugwort_pollen: Array(48).fill(100).concat(Array(24).fill(15)).concat(Array(96).fill(15)),
+        ragweed_pollen: Array(48).fill(80).concat(Array(24).fill(8)).concat(Array(96).fill(8)),
         olive_pollen: Array(168).fill(0),
-        european_aqi: Array(18).fill(null).concat([45, 48, 50, 52, 50, 48]).concat(Array(144).fill(42))
+        european_aqi: Array(48).fill(135).concat(Array(24).fill(42)).concat(Array(96).fill(42))
       }
     },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
     forecast: {
       daily: {
         time: generateForecastDates(),
-        weather_code: [0, 1, 2, 1, 0, 1, 0],
-        temperature_2m_max: [22, 21, 19, 20, 23, 22, 24],
-        temperature_2m_min: [15, 14, 12, 13, 16, 15, 17],
-        precipitation_probability_max: [10, 20, 30, 15, 5, 10, 0],
-        wind_speed_10m_max: [15, 18, 22, 17, 12, 14, 10]
+        weather_code: [0, 1, 0, 1, 0, 1, 0],
+        temperature_2m_max: [22, 21, 24, 20, 23, 22, 24],
+        temperature_2m_min: [15, 14, 17, 13, 16, 15, 17],
+        precipitation_probability_max: [10, 20, 5, 15, 5, 10, 0],
+        wind_speed_10m_max: [15, 18, 12, 17, 12, 14, 10]
       }
     }
   },

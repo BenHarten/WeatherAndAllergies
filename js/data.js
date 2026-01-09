@@ -25,13 +25,22 @@ const POLLEN_NAMES = {
 };
 
 const POLLEN_LEVELS = {
-  keine: 'Keine ✓',
-  sehr_niedrig: 'Sehr niedrig ✓',
-  niedrig: 'Niedrig ✓',
-  mäßig: 'Mäßig ⚠',
-  hoch: 'Hoch ⚠⚠',
-  sehr_hoch: 'Sehr hoch ⚠⚠⚠',
+  keine: 'Keine',
+  sehr_niedrig: 'Sehr niedrig',
+  niedrig: 'Niedrig',
+  mäßig: 'Mäßig',
+  hoch: 'Hoch',
+  sehr_hoch: 'Sehr hoch',
   null: 'Keine Daten'
+};
+
+const MEDICATION_RECOMMENDATIONS = {
+  keine: { text: 'Keine Medikamente nötig', icon: '✅', recommendation: 'Alles klar!' },
+  sehr_niedrig: { text: 'Keine Medikamente nötig', icon: '✅', recommendation: 'Freier Durchatmen!' },
+  niedrig: { text: 'Medikamente empfohlen', icon: '💊', recommendation: 'Zeit für Antiallergika!' },
+  mäßig: { text: 'Medikamente sehr empfohlen', icon: '💊💊', recommendation: 'Schnell zur Apotheke!' },
+  hoch: { text: 'Medikamente dringend empfohlen', icon: '💊💊💊', recommendation: 'Medikamente sind wichtig!' },
+  sehr_hoch: { text: 'Sofort Medikamente nehmen', icon: '💊💊💊💊', recommendation: 'Notfall-Modus aktivieren!' }
 };
 
 const AQI_LEVELS = {
