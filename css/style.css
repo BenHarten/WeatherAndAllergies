@@ -85,7 +85,7 @@ button:disabled{opacity:0.5;cursor:not-allowed}
 /* Allergy Forecast Items */
 .allergy-forecast-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px}
 .allergy-forecast-date{font-weight:600;color:var(--accent);font-size:14px}
-.allergy-forecast-level{color:var(--text);font-size:16px;font-weight:600}
+.allergy-forecast-level{color:var(--text);font-size:13px;font-weight:600}
 .allergy-forecast-types{color:var(--muted);font-size:13px}
 
 /* Results Selection */

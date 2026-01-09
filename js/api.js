@@ -9,8 +9,8 @@ const CONFIG = {
   // Forecast configuration
   INITIAL_FORECAST_DAYS: 7,
   MAX_FORECAST_DAYS: 16,
-  // API caching (1 hour)
-  CACHE_TTL: 3600000
+  // API caching (30 minutes)
+  CACHE_TTL: 1800000
 };
 
 const APIS = {
