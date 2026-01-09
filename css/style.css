@@ -1,124 +1,119 @@
 :root{
-  --bg1: #0f172a;
-  --bg2: #0b3d91;
-  --card: rgba(255,255,255,0.06);
-  --muted: #b6c2d8;
-  --accent: #7dd3fc;
-  --glass: rgba(255,255,255,0.04);
+  --bg1:#0f172a;
+  --bg2:#0b3d91;
+  --card:rgba(255,255,255,0.06);
+  --muted:#b6c2d8;
+  --accent:#7dd3fc;
+  --text:#e6eef8;
 }
-*{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
-html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#e6eef8}
+
+*{box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--text)}
 .container{max-width:960px;margin:0 auto;padding:20px}
-.site-header{padding:28px 0 0 0;text-align:left}
-.site-header h1{margin:0;font-size:28px;letter-spacing:-0.5px}
+
+/* Header */
+.site-header{padding:28px 0 0;text-align:left}
+.site-header h1{margin:0;font-size:28px}
 .tagline{margin:6px 0 0;color:var(--muted);font-size:14px}
 .location-display{margin:8px 0 16px;padding:8px 0;display:flex;align-items:baseline;gap:12px}
 .location-display h2{margin:0;font-size:16px;color:var(--muted);font-weight:400}
 .location-date{color:var(--muted);font-size:14px}
-.controls .row{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
-input#placeInput{flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:0;background:var(--glass);color:inherit}
-button{background:linear-gradient(90deg,var(--accent),#60a5fa);border:0;color:#072030;padding:9px 12px;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-button:active{opacity:0.85}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:10px}
-.card{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));padding:18px;border-radius:12px;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(2,6,23,0.5)}
-.card h2{margin:0 0 10px;font-size:18px}
-.content p{margin:0;color:var(--muted)}
-.muted{color:var(--muted)}
-.weather-container{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.weather-left{flex:1;display:flex;flex-direction:column;gap:6px}
-.weather-right{display:flex;flex-direction:column;align-items:center;gap:4px}
-.weather-condition{color:var(--muted);font-size:14px}
-.weather-wind{color:var(--muted);font-size:13px;white-space:nowrap}
-.weather-icon{font-size:48px;line-height:1}
-.weather-temp{font-size:36px;font-weight:600;color:#e6eef8}
-.footer{margin-top:22px;color:var(--muted);text-align:center;font-size:12px}
 
-/* Forecast Modal */
-.forecast-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
-.forecast-modal-content{background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(11,61,145,0.95));border:1px solid rgba(255,255,255,0.1);border-radius:20px;backdrop-filter:blur(12px);max-width:900px;width:100%;max-height:80vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+/* Controls */
+.controls .row{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+input#placeInput{flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:0;background:rgba(255,255,255,0.04);color:inherit}
+button{background:linear-gradient(90deg,var(--accent),#60a5fa);border:0;color:#072030;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:500}
+button:active{opacity:0.85}
+button:disabled{opacity:0.5;cursor:not-allowed}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:10px}
+.card{background:rgba(255,255,255,0.03);padding:18px;border-radius:12px;cursor:pointer;transition:transform 0.2s;box-shadow:0 6px 18px rgba(2,6,23,0.5)}
+.card:hover{transform:translateY(-2px)}
+.card h2{margin:0 0 10px;font-size:18px}
+
+/* Weather Card */
+.weather-container,.allergy-container{display:flex;justify-content:space-between;align-items:center}
+.weather-left,.allergy-right{flex:1;display:flex;flex-direction:column;gap:6px;padding-left:12px}
+.weather-right{display:flex;flex-direction:column;align-items:center;gap:4px}
+.weather-icon{font-size:48px}
+.weather-temp{font-size:36px;font-weight:600}
+.weather-condition,.weather-wind{color:var(--muted);font-size:14px}
+
+/* Allergy Card */
+.allergy-left{padding-right:12px}
+.allergy-right{flex:1;padding-left:12px}
+.allergy-level{color:var(--muted);font-size:14px}
+.allergy-level strong{color:var(--text);font-weight:600}
+.allergy-types{color:var(--muted);font-size:14px}
+
+/* Modal Base */
+.forecast-modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.forecast-modal-content{background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(11,61,145,0.95));border:1px solid rgba(255,255,255,0.1);border-radius:20px;max-width:900px;width:100%;max-height:80vh;overflow-y:auto;padding:24px}
 .forecast-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1)}
-.forecast-header h2{margin:0;font-size:24px;color:#e6eef8}
-.forecast-close{background:0;border:0;color:#b6c2d8;font-size:32px;cursor:pointer;padding:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;transition:color 0.2s}
-.forecast-close:hover{color:#e6eef8}
+.forecast-header h2{margin:0;font-size:24px}
+.forecast-close{background:0;border:0;color:var(--muted);font-size:32px;cursor:pointer;padding:0;width:40px;height:40px;transition:color 0.2s}
+.forecast-close:hover{color:var(--text)}
 .forecast-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.forecast-footer{display:flex;justify-content:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)}
+
+/* Forecast Items (Weather) */
 .forecast-day{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.2s;cursor:pointer}
-.forecast-day:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);transform:translateY(-2px)}
-.forecast-day-left{display:flex;flex-direction:column;gap:4px;flex:1}
-.forecast-day-date{font-weight:600;color:#7dd3fc;font-size:16px}
-.forecast-day-icon{font-size:32px;line-height:1}
-.forecast-day-desc{color:#b6c2d8;font-size:14px}
-.forecast-day-temp{display:flex;flex-direction:column;gap:4px;align-items:center;flex-shrink:0}
+.forecast-day:hover{background:rgba(255,255,255,0.08);transform:translateY(-2px)}
+.forecast-day-left{flex:1}
+.forecast-day-date{font-weight:600;color:var(--accent);font-size:16px}
+.forecast-day-icon{font-size:32px}
+.forecast-day-desc{color:var(--muted);font-size:14px}
+.forecast-day-temp{display:flex;flex-direction:column;align-items:center}
 .forecast-day-max{color:#f87171;font-weight:600;font-size:18px}
 .forecast-day-min{color:#60a5fa;font-size:18px}
-.forecast-day-right{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
-.forecast-day-meta{color:#b6c2d8;font-size:13px;white-space:nowrap}
-.forecast-footer{display:flex;justify-content:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)}
-.forecast-load-more{background:linear-gradient(90deg,#7dd3fc,#60a5fa);border:0;color:#072030;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:500;transition:all 0.2s}
-.forecast-load-more:hover{opacity:0.9;transform:translateY(-2px)}
-
-/* Results Selection Modal */
-.results-list{display:flex;flex-direction:column;gap:10px}
-.result-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;cursor:pointer;transition:all 0.2s}
-.result-item:hover{background:rgba(255,255,255,0.1);border-color:#7dd3fc;transform:translateX(4px)}
-.result-item-name{font-weight:600;color:#7dd3fc;font-size:16px;margin-bottom:4px}
-.result-item-detail{color:#b6c2d8;font-size:13px}
-.forecast-load-more:disabled{opacity:0.5;cursor:not-allowed}
+.forecast-day-right{display:flex;flex-direction:column;align-items:flex-end}
+.forecast-day-meta{color:var(--muted);font-size:13px}
 
 /* Hourly Forecast */
-.hourly-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:background 0.2s,border-color 0.2s;cursor:default}
-.hourly-item:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15)}
-.hourly-item.hourly-current{background:rgba(125,211,252,0.15);border-color:#7dd3fc;box-shadow:0 0 12px rgba(125,211,252,0.3)}
-.hourly-left{display:flex;flex-direction:column;gap:4px;flex:1}
-.hourly-time{font-weight:600;color:#7dd3fc;font-size:14px}
-.hourly-item.hourly-current .hourly-time{color:#06b6d4;font-weight:700}
-.hourly-icon{font-size:24px;line-height:1}
-.hourly-desc{color:#b6c2d8;font-size:12px}
-.hourly-temp{font-size:24px;font-weight:600;color:#e6eef8;flex-shrink:0}
-.hourly-right{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
-.hourly-meta{color:#b6c2d8;font-size:13px;white-space:nowrap}
+.hourly-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.2s}
+.hourly-item:hover{background:rgba(255,255,255,0.08)}
+.hourly-item.hourly-current{background:rgba(125,211,252,0.15);border-color:var(--accent)}
+.hourly-left{flex:1}
+.hourly-time{font-weight:600;color:var(--accent);font-size:14px}
+.hourly-icon{font-size:24px}
+.hourly-desc{color:var(--muted);font-size:12px}
+.hourly-temp{font-size:24px;font-weight:600}
+.hourly-right{display:flex;flex-direction:column;align-items:flex-end}
+.hourly-meta{color:var(--muted);font-size:13px}
 
-/* Allergy/Pollen Styling */
-.allergy-container{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.allergy-left{flex:1;display:flex;flex-direction:column;gap:6px}
-.allergy-right{display:flex;flex-direction:column;align-items:center;gap:0;align-self:center}
-.allergy-level{color:var(--muted);font-size:14px;margin-bottom:0;font-weight:500}
-.allergy-level strong{color:#e6eef8;font-weight:600}
-.allergy-types{color:var(--muted);font-size:14px}
-.allergy-aqi-label-top{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;white-space:nowrap}
-.allergy-aqi-value{font-size:36px;font-weight:600;color:#e6eef8;line-height:1}
-.allergy-aqi-level{color:var(--muted);font-size:12px;white-space:nowrap}
+/* Allergy Forecast Items */
+.allergy-forecast-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.allergy-forecast-date{font-weight:600;color:var(--accent);font-size:14px}
+.allergy-forecast-level{color:var(--text);font-size:16px;font-weight:600}
+.allergy-forecast-types{color:var(--muted);font-size:13px}
 
-.card{cursor:pointer}
-.card:hover{transform:translateY(-2px)}
+/* Results Selection */
+.results-list{display:flex;flex-direction:column;gap:10px}
+.result-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;cursor:pointer;transition:all 0.2s}
+.result-item:hover{background:rgba(255,255,255,0.1);border-color:var(--accent);transform:translateX(4px)}
+.result-item-name{font-weight:600;color:var(--accent);font-size:16px;margin-bottom:4px}
+.result-item-detail{color:var(--muted);font-size:13px}
 
-/* Allergy Forecast */
-.allergy-forecast-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.2s}
-.allergy-forecast-left{display:flex;flex-direction:column;gap:4px;flex:1}
-.allergy-forecast-date{font-weight:600;color:#7dd3fc;font-size:14px}
-.allergy-forecast-level{color:#e6eef8;font-size:16px;font-weight:600}
-.allergy-forecast-types{color:#b6c2d8;font-size:13px}
-.allergy-forecast-right{display:flex;flex-direction:column;align-items:center;gap:4px}
-.allergy-forecast-aqi{font-size:36px;font-weight:600;color:#e6eef8}
-.allergy-forecast-aqi-label{color:#b6c2d8;font-size:12px;white-space:nowrap}
+.muted{color:var(--muted)}
+.footer{margin-top:22px;color:var(--muted);text-align:center;font-size:12px}
 
+/* Responsive */
 @media (max-width:768px){
   .container{padding:16px}
   .site-header h1{font-size:24px}
-  .controls .row{gap:6px}
   input#placeInput{min-width:120px}
 }
 
 @media (max-width:480px){
   .container{padding:12px}
-  .site-header{padding:16px 0 0 0}
+  .site-header{padding:16px 0 0}
   .site-header h1{font-size:20px}
   .tagline{font-size:12px}
   .controls .row{flex-direction:column}
-  input#placeInput{width:100%;min-width:unset}
+  input#placeInput{width:100%;min-width:0}
   button{width:100%}
   .cards{grid-template-columns:1fr}
   .card{padding:14px}
-  .temp{font-size:28px}
-  .meta{font-size:12px}
   .card h2{font-size:16px}
 }

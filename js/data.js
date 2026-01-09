@@ -25,24 +25,20 @@ const POLLEN_NAMES = {
 };
 
 const POLLEN_LEVELS = {
-  keine: 'Keine',
-  sehr_niedrig: 'Sehr niedrig',
-  niedrig: 'Niedrig',
-  mäßig: 'Mäßig',
-  hoch: 'Hoch',
-  sehr_hoch: 'Sehr hoch',
+  keine: 'Keine (0/5)',
+  sehr_niedrig: 'Sehr niedrig (1/5)',
+  niedrig: 'Niedrig (2/5)',
+  mäßig: 'Mäßig (3/5)',
+  hoch: 'Hoch (4/5)',
+  sehr_hoch: 'Sehr hoch (5/5)',
   null: 'Keine Daten'
 };
 
 const MEDICATION_RECOMMENDATIONS = {
-  keine: { text: 'Keine Medikamente nötig', icon: '✅', recommendation: 'Alles klar!' },
-  sehr_niedrig: { text: 'Keine Medikamente nötig', icon: '✅', recommendation: 'Freier Durchatmen!' },
-  niedrig: { text: 'Medikamente empfohlen', icon: '💊', recommendation: 'Zeit für Antiallergika!' },
-  mäßig: { text: 'Medikamente sehr empfohlen', icon: '💊💊', recommendation: 'Schnell zur Apotheke!' },
-  hoch: { text: 'Medikamente dringend empfohlen', icon: '💊💊💊', recommendation: 'Medikamente sind wichtig!' },
-  sehr_hoch: { text: 'Sofort Medikamente nehmen', icon: '💊💊💊💊', recommendation: 'Notfall-Modus aktivieren!' }
-};
-
-const AQI_LEVELS = {
-  getLevel: (aqi) => aqi <= 15 ? 'Gut' : aqi <= 30 ? 'Zufriedenstellend' : aqi <= 55 ? 'Mäßig' : aqi <= 100 ? 'Schlecht' : 'Sehr schlecht'
+  keine: { text: 'Keine Medikamente nötig', icon: '✅', bgColor: '#c8e6c9' },
+  sehr_niedrig: { text: 'Keine Medikamente nötig', icon: '✅', bgColor: '#c8e6c9' },
+  niedrig: { text: 'Medikamente empfohlen', icon: '💊', bgColor: '#fff9c4' },
+  mäßig: { text: 'Medikamente sehr empfohlen', icon: '💊💊', bgColor: '#ffe0b2' },
+  hoch: { text: 'Medikamente dringend empfohlen', icon: '💊💊💊', bgColor: '#ffcdd2' },
+  sehr_hoch: { text: 'Ohne Medikamente geht nicht!', icon: '🏥', bgColor: '#ef9a9a' }
 };

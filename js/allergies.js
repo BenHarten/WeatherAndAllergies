@@ -21,8 +21,6 @@ async function fetchAndParsePollen(lat, lon) {
       olive: 0
     };
     
-    let aqi = 0;
-    
     // Iterate through hourly data to find today's max values
     if(data.hourly && data.hourly.time) {
       data.hourly.time.forEach((timeStr, i) => {
@@ -35,11 +33,6 @@ async function fetchAndParsePollen(lat, lon) {
           if(data.hourly.mugwort_pollen?.[i]) values.mugwort = Math.max(values.mugwort, data.hourly.mugwort_pollen[i]);
           if(data.hourly.ragweed_pollen?.[i]) values.ragweed = Math.max(values.ragweed, data.hourly.ragweed_pollen[i]);
           if(data.hourly.olive_pollen?.[i]) values.olive = Math.max(values.olive, data.hourly.olive_pollen[i]);
-          
-          // Get AQI for today
-          if(data.hourly.european_aqi?.[i] !== null && data.hourly.european_aqi?.[i] !== undefined) {
-            aqi = Math.max(aqi, data.hourly.european_aqi[i]);
-          }
         }
       });
     }
@@ -59,7 +52,7 @@ async function fetchAndParsePollen(lat, lon) {
     else if(maxVal <= 150) level = 'hoch';
     else level = 'sehr_hoch';
     
-    return {level, types: domTypes.length > 0 ? domTypes : ['Keine'], aqi};
+    return {level, types: domTypes.length > 0 ? domTypes : ['Keine']};
   } catch(e) {
     console.error('Pollen API error:', e);
     throw e;
@@ -76,25 +69,18 @@ function renderAllergy(pollen) {
   const meds = getMedicationRecommendation(pollen.level);
   
   const leftHTML = `
-    <div class="allergy-level">Pollenbelastung:<br><strong>${levelText}</strong></div>
-    <div class="allergy-types">Dominante Pollen:<br>${typesText}</div>
-    <div class="medication-recommendation" style="margin-top:8px;padding:8px;background:#f0f0f0;border-radius:4px;font-size:12px;color:#555;">
-      <strong>${meds.text}</strong>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:6px;max-width:50%px">
+      <div style="font-size:28px;line-height:1;">${meds.icon}</div>
+      <div style="font-size:10px;color:#333;font-weight:600;background-color:${meds.bgColor};padding:4px 8px;border-radius:4px;word-wrap:break-word;line-height:1.2;max-width:70%;">${meds.text}</div>
     </div>
   `;
   
-  let rightHTML = '';
-  if(pollen.aqi !== null && pollen.aqi !== undefined) {
-    const aqiLevel = AQI_LEVELS.getLevel(pollen.aqi);
-    rightHTML = `
-      <div class="allergy-aqi-label-top">Luftqualität</div>
-      <div class="allergy-aqi-value">${pollen.aqi}</div>
-      <div class="allergy-aqi-level">${aqiLevel}</div>
-      <div style="font-size:20px;margin-top:8px;line-height:1;">${meds.icon}</div>
-    `;
-  } else {
-    rightHTML = `<div style="font-size:28px;display:flex;align-items:center;justify-content:center;height:100%;line-height:1;">${meds.icon}</div>`;
-  }
+  const rightHTML = `
+    <div>
+      <div class="allergy-level">Pollenbelastung:<br><strong>${levelText}</strong></div>
+      <div class="allergy-types" style="margin-top:8px;">Dominante Pollen:<br>${typesText}</div>
+    </div>
+  `;
   
   renderCard('allergyContent', leftHTML, rightHTML, 'allergy');
 }

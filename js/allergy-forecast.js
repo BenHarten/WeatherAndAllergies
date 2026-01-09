@@ -43,12 +43,12 @@ async function fetchAndStoreAllergyData(lat, lon) {
 }
 
 function getPollenLevelText(value) {
-  if(value === 0) return 'Keine ✓';
-  else if(value <= 10) return 'Sehr niedrig ✓';
-  else if(value <= 30) return 'Niedrig ✓';
-  else if(value <= 80) return 'Mäßig';
-  else if(value <= 150) return 'Hoch';
-  else return 'Sehr hoch';
+  if(value === 0) return POLLEN_LEVELS.keine + ' ✓';
+  else if(value <= 10) return POLLEN_LEVELS.sehr_niedrig + ' ✓';
+  else if(value <= 30) return POLLEN_LEVELS.niedrig + ' ✓';
+  else if(value <= 80) return POLLEN_LEVELS.mäßig;
+  else if(value <= 150) return POLLEN_LEVELS.hoch;
+  else return POLLEN_LEVELS.sehr_hoch;
 }
 
 function aggregateDailyPollen(hourlyData, days) {
@@ -64,19 +64,6 @@ function aggregateDailyPollen(hourlyData, days) {
     const dateStr = new Date(now.getTime() + day * 86400000).toISOString().split('T')[0];
     const startOfDay = new Date(dateStr + 'T00:00:00Z');
     const endOfDay = new Date(dateStr + 'T23:59:59Z');
-    
-    // Find max AQI for this day
-    let maxAqi = 0;
-    if(hourlyData.hourly.european_aqi && Array.isArray(hourlyData.hourly.european_aqi)) {
-      hourlyData.hourly.european_aqi.forEach((val, i) => {
-        const timeStr = hourlyData.hourly.time?.[i];
-        if(!timeStr) return;
-        const time = new Date(timeStr);
-        if(time >= startOfDay && time <= endOfDay && val !== null) {
-          maxAqi = Math.max(maxAqi, val);
-        }
-      });
-    }
     
     // Find max pollen values for this day
     const maxPollen = {
@@ -114,7 +101,6 @@ function aggregateDailyPollen(hourlyData, days) {
     
     dailyData.push({
       date: dateStr,
-      aqi: maxAqi,
       level: getPollenLevelText(maxVal),
       types: types.length > 0 ? types : ['Keine'],
       maxVal: maxVal
@@ -150,17 +136,14 @@ async function renderAllergyForecastDays() {
       const meds = getMedicationRecommendation(levelKey);
       
       return `
-        <div class="allergy-forecast-item">
-          <div class="allergy-forecast-left">
-            <div class="allergy-forecast-date">${dayName} · ${dayDate}</div>
+        <div class="allergy-forecast-item" style="display:flex;">
+          <div class="allergy-forecast-left" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding-right:12px;max-width:50%;">
+            <div class="allergy-forecast-date" style="width:100%;text-align:center;">${dayName} · ${dayDate}</div>
+            <div style="font-size:9px;color:#333;font-weight:600;text-align:center;background-color:${meds.bgColor};padding:3px 6px;border-radius:3px;word-wrap:break-word;line-height:1.2;max-width:70%;">${meds.text}</div>
+          </div>
+          <div class="allergy-forecast-right" style="flex:1;padding-left:12px;">
             <div class="allergy-forecast-level">${day.level}</div>
             <div class="allergy-forecast-types">${day.types.join(', ')}</div>
-            <div style="margin-top:6px;font-size:11px;color:#ddd;font-weight:600;"><strong>${meds.text}</strong></div>
-          </div>
-          <div class="allergy-forecast-right">
-            <div class="allergy-forecast-aqi">${day.aqi}</div>
-            <div class="allergy-forecast-aqi-label">Luftqualität</div>
-            <div style="font-size:18px;margin-top:8px;line-height:1;">${meds.icon}</div>
           </div>
         </div>
       `;
