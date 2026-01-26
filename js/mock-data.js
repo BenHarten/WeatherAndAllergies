@@ -53,6 +53,30 @@ const MOCK_SCENARIOS = {
         european_aqi: Array(48).fill(135).concat(Array(24).fill(42)).concat(Array(96).fill(42))
       }
     },
+    dwd: {
+      content: [
+        {
+          region_id: 50,
+          region_name: 'Brandenburg und Berlin',
+          partregion_name: '',
+          partregion_id: -1,
+          Pollen: {
+            Hasel: { today: '2', tomorrow: '1-2', dayafter_to: '1' },
+            Erle: { today: '2-3', tomorrow: '2', dayafter_to: '1' },
+            Birke: { today: '3', tomorrow: '2-3', dayafter_to: '2' },
+            Esche: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Graeser: { today: '1-2', tomorrow: '1', dayafter_to: '0' },
+            Roggen: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Beifuss: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Ambrosia: { today: '0', tomorrow: '0', dayafter_to: '0' }
+          }
+        }
+      ],
+      sender: 'Deutscher Wetterdienst - Medizin-Meteorologie',
+      last_update: new Date().toISOString(),
+      next_update: new Date(Date.now() + 3600000).toISOString(),
+      name: 'Pollenflug-Gefahrenindex für Deutschland'
+    },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
     forecast: {
       daily: {
@@ -87,6 +111,30 @@ const MOCK_SCENARIOS = {
         olive_pollen: Array(168).fill(0),
         european_aqi: Array(18).fill(null).concat([22, 24, 25, 24, 23, 22]).concat(Array(144).fill(23))
       }
+    },
+    dwd: {
+      content: [
+        {
+          region_id: 50,
+          region_name: 'Brandenburg und Berlin',
+          partregion_name: '',
+          partregion_id: -1,
+          Pollen: {
+            Hasel: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Erle: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Birke: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Esche: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Graeser: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Roggen: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Beifuss: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Ambrosia: { today: '0', tomorrow: '0', dayafter_to: '0' }
+          }
+        }
+      ],
+      sender: 'Deutscher Wetterdienst - Medizin-Meteorologie',
+      last_update: new Date().toISOString(),
+      next_update: new Date(Date.now() + 3600000).toISOString(),
+      name: 'Pollenflug-Gefahrenindex für Deutschland'
     },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
     forecast: {
@@ -123,6 +171,30 @@ const MOCK_SCENARIOS = {
         european_aqi: Array(18).fill(null).concat([65, 68, 70, 68, 65, 62]).concat(Array(144).fill(65))
       }
     },
+    dwd: {
+      content: [
+        {
+          region_id: 50,
+          region_name: 'Brandenburg und Berlin',
+          partregion_name: '',
+          partregion_id: -1,
+          Pollen: {
+            Hasel: { today: '1', tomorrow: '0-1', dayafter_to: '0' },
+            Erle: { today: '1', tomorrow: '1', dayafter_to: '0-1' },
+            Birke: { today: '1-2', tomorrow: '1', dayafter_to: '0' },
+            Esche: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Graeser: { today: '1', tomorrow: '1', dayafter_to: '0' },
+            Roggen: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Beifuss: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Ambrosia: { today: '0', tomorrow: '0', dayafter_to: '0' }
+          }
+        }
+      ],
+      sender: 'Deutscher Wetterdienst - Medizin-Meteorologie',
+      last_update: new Date().toISOString(),
+      next_update: new Date(Date.now() + 3600000).toISOString(),
+      name: 'Pollenflug-Gefahrenindex für Deutschland'
+    },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
     forecast: {
       daily: {
@@ -157,6 +229,30 @@ const MOCK_SCENARIOS = {
         olive_pollen: Array(168).fill(60),
         european_aqi: Array(18).fill(null).concat([120, 125, 130, 128, 125, 122]).concat(Array(144).fill(125))
       }
+    },
+    dwd: {
+      content: [
+        {
+          region_id: 50,
+          region_name: 'Brandenburg und Berlin',
+          partregion_name: '',
+          partregion_id: -1,
+          Pollen: {
+            Hasel: { today: '3', tomorrow: '2-3', dayafter_to: '1-2' },
+            Erle: { today: '3', tomorrow: '2-3', dayafter_to: '2' },
+            Birke: { today: '3', tomorrow: '3', dayafter_to: '2-3' },
+            Esche: { today: '1', tomorrow: '0-1', dayafter_to: '0' },
+            Graeser: { today: '2-3', tomorrow: '2', dayafter_to: '1' },
+            Roggen: { today: '1', tomorrow: '0-1', dayafter_to: '0' },
+            Beifuss: { today: '0', tomorrow: '0', dayafter_to: '0' },
+            Ambrosia: { today: '0', tomorrow: '0', dayafter_to: '0' }
+          }
+        }
+      ],
+      sender: 'Deutscher Wetterdienst - Medizin-Meteorologie',
+      last_update: new Date().toISOString(),
+      next_update: new Date(Date.now() + 3600000).toISOString(),
+      name: 'Pollenflug-Gefahrenindex für Deutschland'
     },
     geocode: { lat: 52.52, lon: 13.405, display_name: 'Berlin, Deutschland' },
     forecast: {

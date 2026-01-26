@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DWD Pollen Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+    pre { background: #000; padding: 10px; overflow: auto; border: 1px solid #0f0; margin: 10px 0; }
+    button { padding: 10px; margin: 5px; background: #0f0; color: #000; border: none; cursor: pointer; }
+    .pollen-type { margin: 10px 0; padding: 10px; background: #222; border-left: 3px solid #0f0; }
+    .high { border-left-color: #f00; }
+    .medium { border-left-color: #ff0; }
+    .low { border-left-color: #0f0; }
+  </style>
+</head>
+<body>
+  <h1>DWD Pollen API Test</h1>
+  <button onclick="testBerlin()">Test Berlin</button>
+  <button onclick="testMunich()">Test Munich</button>
+  <button onclick="testHamburg()">Test Hamburg</button>
+  <button onclick="testStuttgart()">Test Stuttgart</button>
+  <div id="output"></div>
+
+  <script src="js/dwd-pollen.js"></script>
+  <script>
+    async function testLocation(name, lat, lon) {
+      document.getElementById('output').innerHTML = `<p>Fetching ${name} (${lat}, ${lon})...</p>`;
+      
+      try {
+        const result = await fetchAndParseDWDPollen(lat, lon);
+        
+        if (!result) {
+          document.getElementById('output').innerHTML = `<p style="color: red;">No data returned</p>`;
+          return;
+        }
+        
+        let html = `
+          <h2>${name}</h2>
+          <p><strong>Region:</strong> ${result.region}</p>
+          <p><strong>Teilregion:</strong> ${result.partregion}</p>
+          <p><strong>Level:</strong> ${result.level}</p>
+          <p><strong>Dominant Types:</strong> ${result.types.join(', ')}</p>
+          <p><strong>Last Update:</strong> ${result.lastUpdate}</p>
+          <h3>Today's Pollen Levels:</h3>
+        `;
+        
+        const pollenData = result.allData.data.today;
+        for (const [type, value] of Object.entries(pollenData).sort(([,a], [,b]) => b - a)) {
+          const className = value > 60 ? 'high' : value > 30 ? 'medium' : 'low';
+          html += `<div class="pollen-type ${className}"><strong>${type}:</strong> ${value}</div>`;
+        }
+        
+        html += '<h3>Full Data:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+        
+        document.getElementById('output').innerHTML = html;
+      } catch(e) {
+        document.getElementById('output').innerHTML = `<p style="color: red;">Error: ${e.message}</p><pre>${e.stack}</pre>`;
+      }
+    }
+
+    async function testBerlin() {
+      await testLocation('Berlin', 52.52, 13.405);
+    }
+
+    async function testMunich() {
+      await testLocation('Munich', 48.1351, 11.5820);
+    }
+
+    async function testHamburg() {
+      await testLocation('Hamburg', 53.5511, 9.9937);
+    }
+
+    async function testStuttgart() {
+      await testLocation('Stuttgart', 48.7758, 9.1829);
+    }
+  </script>
+</body>
+</html>

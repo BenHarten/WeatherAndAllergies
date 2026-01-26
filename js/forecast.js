@@ -221,6 +221,13 @@ async function showHourlyForecast(dateStr) {
 }
 
 function backToForecast() {
+  // Check if we're in allergy detail view
+  if(allergyForecastState?.detailView) {
+    goBackFromDetail();
+    return;
+  }
+  
+  // Otherwise handle weather hourly view
   forecastState.isViewingHourly = false;
   forecastState.hourlyDate = null;
   

@@ -34,11 +34,51 @@ const POLLEN_LEVELS = {
   null: 'Keine Daten'
 };
 
+// Pollen level thresholds for value-to-category conversion
+const POLLEN_THRESHOLDS = {
+  sehr_niedrig: 10,
+  niedrig: 30,
+  mäßig: 80,
+  hoch: 150
+  // sehr_hoch: 150+
+};
+
 const MEDICATION_RECOMMENDATIONS = {
   keine: { text: 'Keine Medikamente nötig', icon: '✅', bgColor: '#c8e6c9' },
-  sehr_niedrig: { text: 'Keine Medikamente nötig', icon: '✅', bgColor: '#c8e6c9' },
+  sehr_niedrig: { text: 'Medikamente eventuell nötig', icon: '❔', bgColor: '#dcedc8' },
   niedrig: { text: 'Medikamente empfohlen', icon: '💊', bgColor: '#fff9c4' },
   mäßig: { text: 'Medikamente sehr empfohlen', icon: '💊💊', bgColor: '#ffe0b2' },
   hoch: { text: 'Medikamente dringend empfohlen', icon: '💊💊💊', bgColor: '#ffcdd2' },
   sehr_hoch: { text: 'Ohne Medikamente geht nicht!', icon: '🏥', bgColor: '#ef9a9a' }
 };
+
+// ============ UTILITY FUNCTIONS FOR POLLEN LEVELS ============
+/**
+ * Convert numeric pollen value to level category
+ * Used by both DWD and Open-Meteo data sources
+ */
+function getPollenLevelFromValue(value) {
+  if (value === 0) return 'keine';
+  if (value <= POLLEN_THRESHOLDS.sehr_niedrig) return 'sehr_niedrig';
+  if (value <= POLLEN_THRESHOLDS.niedrig) return 'niedrig';
+  if (value <= POLLEN_THRESHOLDS.mäßig) return 'mäßig';
+  if (value <= POLLEN_THRESHOLDS.hoch) return 'hoch';
+  return 'sehr_hoch';
+}
+
+/**
+ * Get pollen level text with optional checkmark for low levels
+ * Used in forecast views
+ */
+function getPollenLevelText(value) {
+  const level = getPollenLevelFromValue(value);
+  if(value <= POLLEN_THRESHOLDS.niedrig) return POLLEN_LEVELS[level] + ' ✓';
+  return POLLEN_LEVELS[level];
+}
+
+/**
+ * Get medication recommendation for a pollen level
+ */
+function getMedicationRecommendation(level) {
+  return MEDICATION_RECOMMENDATIONS[level] || MEDICATION_RECOMMENDATIONS['keine'];
+}

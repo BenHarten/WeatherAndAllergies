@@ -91,6 +91,14 @@ if(MOCK_MODE) {
       );
     }
 
+    // Intercept DWD Pollen API
+    if(url === '/api/dwd-pollen') {
+      const scenario = getCurrentMockScenario();
+      return Promise.resolve(
+        new Response(JSON.stringify(scenario.dwd), { status: 200 })
+      );
+    }
+
     // Fall back to original fetch for other URLs
     return originalFetch.apply(this, arguments);
   };

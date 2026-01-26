@@ -1,10 +1,24 @@
 // ============ POLLEN/ALLERGIES (OPEN-METEO) ============
 async function fetchAndParsePollen(lat, lon) {
+  // Try DWD first (has more pollen types including hazelnut)
+  try {
+    const dwdResult = await fetchAndParseDWDPollen(lat, lon);
+    if (dwdResult && dwdResult.level) {
+      console.log('✅ Using DWD pollen data:', dwdResult);
+      return dwdResult;
+    } else {
+      console.log('⚠️ DWD returned no data, trying Open-Meteo');
+    }
+  } catch(e) {
+    console.warn('❌ DWD pollen fetch failed, falling back to Open-Meteo:', e);
+  }
+  
+  // Fallback to Open-Meteo
   const url = APIS.openMeteoPollen(lat, lon);
   
   try {
     const data = await getCachedFetch(url);
-    if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar']};
+    if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar'], source: 'open-meteo'};
 
     // Get today's date range
     const now = new Date();
@@ -52,21 +66,26 @@ async function fetchAndParsePollen(lat, lon) {
     else if(maxVal <= 150) level = 'hoch';
     else level = 'sehr_hoch';
     
-    return {level, types: domTypes.length > 0 ? domTypes : ['Keine']};
+    console.log('✅ Using Open-Meteo pollen data (max:', maxVal, ', types:', domTypes, ')');
+    return {level, types: domTypes.length > 0 ? domTypes : ['Keine'], source: 'open-meteo'};
   } catch(e) {
     console.error('Pollen API error:', e);
     throw e;
   }
 }
 
-function getMedicationRecommendation(level) {
-  return MEDICATION_RECOMMENDATIONS[level] || MEDICATION_RECOMMENDATIONS['keine'];
-}
-
 function renderAllergy(pollen) {
   const levelText = POLLEN_LEVELS[pollen.level] || 'Unbekannt';
   const typesText = pollen.types?.join(', ') || 'N/A';
   const meds = getMedicationRecommendation(pollen.level);
+  
+  // Add source indicator and tracked types info
+  let sourceText = '';
+  if (pollen.source === 'dwd') {
+    sourceText = `<div style="font-size:9px;color:var(--muted);margin-top:4px;">Quelle: DWD</div>`;
+  } else {
+    sourceText = `<div style="font-size:9px;color:var(--muted);margin-top:4px;">Quelle: Open-Meteo</div>`;
+  }
   
   const leftHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:6px;max-width:50%px">
@@ -79,6 +98,7 @@ function renderAllergy(pollen) {
     <div>
       <div class="allergy-level">Pollenbelastung:<br><strong>${levelText}</strong></div>
       <div class="allergy-types" style="margin-top:8px;">Dominante Pollen:<br>${typesText}</div>
+      ${sourceText}
     </div>
   `;
   

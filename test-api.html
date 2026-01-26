@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+    pre { background: #000; padding: 10px; overflow: auto; border: 1px solid #0f0; }
+    button { padding: 10px; margin: 5px; background: #0f0; color: #000; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Pollen API Test</h1>
+  <button onclick="testBerlin()">Test Berlin (52.52, 13.41)</button>
+  <button onclick="testToday()">Test Today's Data</button>
+  <div id="output"></div>
+
+  <script>
+    async function testBerlin() {
+      const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=52.52&longitude=13.41&hourly=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=Europe/Berlin';
+      
+      document.getElementById('output').innerHTML = '<p>Fetching...</p>';
+      
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        document.getElementById('output').innerHTML = `
+          <h2>Full Response:</h2>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch(e) {
+        document.getElementById('output').innerHTML = `<p style="color: red;">Error: ${e.message}</p>`;
+      }
+    }
+
+    async function testToday() {
+      const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=52.52&longitude=13.41&hourly=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=Europe/Berlin';
+      
+      document.getElementById('output').innerHTML = '<p>Fetching and analyzing today\'s data...</p>';
+      
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        
+        const values = {
+          alder: 0,
+          birch: 0,
+          grass: 0,
+          mugwort: 0,
+          ragweed: 0,
+          olive: 0
+        };
+        
+        if(data.hourly && data.hourly.time) {
+          data.hourly.time.forEach((timeStr, i) => {
+            const time = new Date(timeStr);
+            if(time >= startOfDay && time <= endOfDay) {
+              if(data.hourly.alder_pollen?.[i]) values.alder = Math.max(values.alder, data.hourly.alder_pollen[i]);
+              if(data.hourly.birch_pollen?.[i]) values.birch = Math.max(values.birch, data.hourly.birch_pollen[i]);
+              if(data.hourly.grass_pollen?.[i]) values.grass = Math.max(values.grass, data.hourly.grass_pollen[i]);
+              if(data.hourly.mugwort_pollen?.[i]) values.mugwort = Math.max(values.mugwort, data.hourly.mugwort_pollen[i]);
+              if(data.hourly.ragweed_pollen?.[i]) values.ragweed = Math.max(values.ragweed, data.hourly.ragweed_pollen[i]);
+              if(data.hourly.olive_pollen?.[i]) values.olive = Math.max(values.olive, data.hourly.olive_pollen[i]);
+            }
+          });
+        }
+        
+        const sorted = Object.entries(values).sort(([,a], [,b]) => b - a);
+        
+        document.getElementById('output').innerHTML = `
+          <h2>Today's Pollen Values (${startOfDay.toLocaleDateString()}):</h2>
+          <pre>${JSON.stringify(values, null, 2)}</pre>
+          <h2>Sorted:</h2>
+          <pre>${JSON.stringify(sorted, null, 2)}</pre>
+          <h2>Max Value: ${sorted[0]?.[1] || 0}</h2>
+        `;
+      } catch(e) {
+        document.getElementById('output').innerHTML = `<p style="color: red;">Error: ${e.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

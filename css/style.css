@@ -83,10 +83,15 @@ button:disabled{opacity:0.5;cursor:not-allowed}
 .hourly-meta{color:var(--muted);font-size:13px}
 
 /* Allergy Forecast Items */
-.allergy-forecast-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.allergy-forecast-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:all 0.2s}
+.allergy-forecast-item:hover{background:rgba(255,255,255,0.08);transform:translateY(-2px)}
 .allergy-forecast-date{font-weight:600;color:var(--accent);font-size:14px}
 .allergy-forecast-level{color:var(--text);font-size:13px;font-weight:600}
 .allergy-forecast-types{color:var(--muted);font-size:13px}
+
+/* Pollen Detail Items */
+.pollen-detail-item{transition:background 0.2s}
+.pollen-detail-item:hover{background:rgba(255,255,255,0.03)}
 
 /* Results Selection */
 .results-list{display:flex;flex-direction:column;gap:10px}
