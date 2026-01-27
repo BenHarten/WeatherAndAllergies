@@ -43,6 +43,16 @@ const POLLEN_THRESHOLDS = {
   // sehr_hoch: 150+
 };
 
+// Empty pollen values template (used for data processing)
+const EMPTY_POLLEN_VALUES = {
+  alder: 0,
+  birch: 0,
+  grass: 0,
+  mugwort: 0,
+  ragweed: 0,
+  olive: 0
+};
+
 const MEDICATION_RECOMMENDATIONS = {
   keine: { text: 'Keine Medikamente nötig', icon: '✅', bgColor: '#c8e6c9' },
   sehr_niedrig: { text: 'Medikamente eventuell nötig', icon: '🤷', bgColor: '#f9ffc4' },

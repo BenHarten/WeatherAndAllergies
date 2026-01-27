@@ -19,7 +19,8 @@ async function fetchAndParsePollen(lat, lon) {
   let combinedMaxVal = 0;
   
   if (dwdData) {
-    const dwdValue = getDWDMaxValue(dwdData);
+    const dwdValues = Object.values(dwdData.allData.data.today);
+    const dwdValue = Math.max(...dwdValues, 0);
     if (dwdValue > combinedMaxVal) {
       combinedMaxVal = dwdValue;
       combinedLevel = dwdData.level;
@@ -27,7 +28,7 @@ async function fetchAndParsePollen(lat, lon) {
   }
   
   if (openMeteoData) {
-    const openMeteoValue = getOpenMeteoMaxValue(openMeteoData);
+    const openMeteoValue = openMeteoData.maxVal ?? 0;
     if (openMeteoValue > combinedMaxVal) {
       combinedMaxVal = openMeteoValue;
       combinedLevel = openMeteoData.level;
@@ -57,24 +58,6 @@ async function fetchAndParsePollen(lat, lon) {
   };
 }
 
-// Helper function to get max value from DWD data
-function getDWDMaxValue(dwdData) {
-  // DWD already stores numeric values in allData.data.today
-  if (dwdData.allData?.data?.today) {
-    const values = Object.values(dwdData.allData.data.today);
-    return Math.max(...values, 0);
-  }
-  return 0;
-}
-
-// Helper function to get max value from Open-Meteo data
-function getOpenMeteoMaxValue(openMeteoData) {
-  if (openMeteoData.maxVal !== undefined) {
-    return openMeteoData.maxVal;
-  }
-  return 0;
-}
-
 // Fetch Open-Meteo pollen data
 async function fetchOpenMeteoPollen(lat, lon) {
   const url = APIS.openMeteoPollen(lat, lon);
@@ -89,14 +72,7 @@ async function fetchOpenMeteoPollen(lat, lon) {
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
     
     // Find max pollen values for today
-    const values = {
-      alder: 0,
-      birch: 0,
-      grass: 0,
-      mugwort: 0,
-      ragweed: 0,
-      olive: 0
-    };
+    const values = { ...EMPTY_POLLEN_VALUES };
     
     // Iterate through hourly data to find today's max values
     if(data.hourly && data.hourly.time) {
@@ -114,13 +90,8 @@ async function fetchOpenMeteoPollen(lat, lon) {
       });
     }
     
-    const sorted = Object.entries(values).sort(([,a], [,b]) => b - a);
-    const domTypes = sorted
-      .filter(([,v]) => v > 0)
-      .slice(0, 3)
-      .map(([k]) => POLLEN_NAMES[k] || k);
-    
-    const maxVal = sorted[0]?.[1] || 0;
+    const domTypes = getTopPollenTypes(values, POLLEN_NAMES, 3, 0);
+    const maxVal = Math.max(...Object.values(values)) || 0;
     const level = getPollenLevelFromValue(maxVal);
     
     return {level, types: domTypes.length > 0 ? domTypes : ['Keine'], maxVal, values};

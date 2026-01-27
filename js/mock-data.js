@@ -9,7 +9,7 @@ const MOCK_MODE = new URLSearchParams(window.location.search).get('mock') === 't
 function generateForecastDates() {
   const dates = [];
   for(let i = 0; i < 7; i++) {
-    dates.push(new Date(Date.now() + 86400000 * i).toISOString().split('T')[0]);
+    dates.push(getDateString(i));
   }
   return dates;
 }

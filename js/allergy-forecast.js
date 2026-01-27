@@ -79,8 +79,7 @@ function aggregateDailyPollen(hourlyData, days) {
     
     // Process each day up to the max days available
     for (let day = 0; day < days; day++) {
-      const now = new Date();
-      const dateStr = new Date(now.getTime() + day * 86400000).toISOString().split('T')[0];
+      const dateStr = getDateString(day);
       
       // Get DWD data for this day
       let dwdDayData = null;
@@ -91,26 +90,9 @@ function aggregateDailyPollen(hourlyData, days) {
       // Get Open-Meteo data for this day
       let openMeteoDayData = null;
       if (openMeteoData?.hourly?.time) {
-        const startOfDay = new Date(dateStr + 'T00:00:00Z');
-        const endOfDay = new Date(dateStr + 'T23:59:59Z');
-        
-        const values = { alder: 0, birch: 0, grass: 0, mugwort: 0, ragweed: 0, olive: 0 };
-        
-        openMeteoData.hourly.time.forEach((timeStr, i) => {
-          const time = new Date(timeStr);
-          if (time >= startOfDay && time <= endOfDay) {
-            if (openMeteoData.hourly.alder_pollen?.[i]) values.alder = Math.max(values.alder, openMeteoData.hourly.alder_pollen[i]);
-            if (openMeteoData.hourly.birch_pollen?.[i]) values.birch = Math.max(values.birch, openMeteoData.hourly.birch_pollen[i]);
-            if (openMeteoData.hourly.grass_pollen?.[i]) values.grass = Math.max(values.grass, openMeteoData.hourly.grass_pollen[i]);
-            if (openMeteoData.hourly.mugwort_pollen?.[i]) values.mugwort = Math.max(values.mugwort, openMeteoData.hourly.mugwort_pollen[i]);
-            if (openMeteoData.hourly.ragweed_pollen?.[i]) values.ragweed = Math.max(values.ragweed, openMeteoData.hourly.ragweed_pollen[i]);
-            if (openMeteoData.hourly.olive_pollen?.[i]) values.olive = Math.max(values.olive, openMeteoData.hourly.olive_pollen[i]);
-          }
-        });
-        
-        const sorted = Object.entries(values).sort(([,a], [,b]) => b - a);
-        const maxVal = sorted[0]?.[1] || 0;
-        const domTypes = sorted.filter(([,v]) => v > 0).slice(0, 3).map(([k]) => POLLEN_NAMES[k] || k);
+        const values = extractOpenMeteoMaxValuesForDay(openMeteoData, dateStr);
+        const maxVal = Math.max(...Object.values(values)) || 0;
+        const domTypes = getTopPollenTypes(values, POLLEN_NAMES, 3, 0);
         const level = getPollenLevelFromValue(maxVal);
         
         openMeteoDayData = { level, types: domTypes, maxVal, values };
