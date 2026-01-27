@@ -21,20 +21,17 @@ const DWD_REGIONS = {
 };
 
 // Convert DWD level (0, 0-1, 1, 1-2, 2, 2-3, 3) to numeric value
+// Scale to match Open-Meteo's range for visual consistency
+// DWD: 0-3 scale → Mapped to align with category thresholds (0, 10, 30, 80, 150)
 function dwdLevelToNumber(level) {
-  if (!level || level === '0') return 0;
-  if (level === '0-1') return 5;
-  if (level === '1') return 10;
-  if (level === '1-2') return 20;
-  if (level === '2') return 40;
-  if (level === '2-3') return 60;
-  if (level === '3') return 100;
+  if (!level || level === '0') return 0;        // keine Belastung → keine (0/5)
+  if (level === '0-1') return 8;                // keine bis geringe → sehr_niedrig (1/5)
+  if (level === '1') return 20;                 // geringe Belastung → niedrig (2/5)
+  if (level === '1-2') return 55;               // geringe bis mittlere → mäßig (3/5)
+  if (level === '2') return 110;                // mittlere Belastung = mäßig (3/5)
+  if (level === '2-3') return 180;              // mittlere bis hohe → hoch (4/5)
+  if (level === '3') return 250;                // hohe Belastung → sehr_hoch (5/5)
   return 0;
-}
-
-// Get pollen level category from DWD numeric value
-function getDWDPollenLevel(value) {
-  return getPollenLevelFromValue(value);
 }
 
 // Find closest region for given coordinates
@@ -134,7 +131,7 @@ async function fetchAndParseDWDPollen(lat, lon) {
     .map(([k]) => DWD_POLLEN_NAMES[k] || k);
   
   const maxVal = sorted[0]?.[1] || 0;
-  const level = getDWDPollenLevel(maxVal);
+  const level = getPollenLevelFromValue(maxVal);
   
   return {
     level,
@@ -164,7 +161,7 @@ async function getDWDPollenForecast(lat, lon, days = 3) {
   const todayMax = todaySorted[0]?.[1] || 0;
   forecast.push({
     date: today.toISOString().split('T')[0],
-    level: getDWDPollenLevel(todayMax),
+    level: getPollenLevelFromValue(todayMax),
     types: todaySorted.filter(([, v]) => v > 0).slice(0, 2).map(([k]) => DWD_POLLEN_NAMES[k]),
     maxVal: todayMax,
     allPollen: todayData
@@ -178,7 +175,7 @@ async function getDWDPollenForecast(lat, lon, days = 3) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   forecast.push({
     date: tomorrow.toISOString().split('T')[0],
-    level: getDWDPollenLevel(tomorrowMax),
+    level: getPollenLevelFromValue(tomorrowMax),
     types: tomorrowSorted.filter(([, v]) => v > 0).slice(0, 2).map(([k]) => DWD_POLLEN_NAMES[k]),
     maxVal: tomorrowMax,
     allPollen: tomorrowData
@@ -193,7 +190,7 @@ async function getDWDPollenForecast(lat, lon, days = 3) {
     dat.setDate(dat.getDate() + 2);
     forecast.push({
       date: dat.toISOString().split('T')[0],
-      level: getDWDPollenLevel(datMax),
+      level: getPollenLevelFromValue(datMax),
       types: datSorted.filter(([, v]) => v > 0).slice(0, 2).map(([k]) => DWD_POLLEN_NAMES[k]),
       maxVal: datMax,
       allPollen: datData

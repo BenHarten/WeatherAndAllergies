@@ -45,7 +45,7 @@ const POLLEN_THRESHOLDS = {
 
 const MEDICATION_RECOMMENDATIONS = {
   keine: { text: 'Keine Medikamente nötig', icon: '✅', bgColor: '#c8e6c9' },
-  sehr_niedrig: { text: 'Medikamente eventuell nötig', icon: '❔', bgColor: '#dcedc8' },
+  sehr_niedrig: { text: 'Medikamente eventuell nötig', icon: '🤷', bgColor: '#f9ffc4' },
   niedrig: { text: 'Medikamente empfohlen', icon: '💊', bgColor: '#fff9c4' },
   mäßig: { text: 'Medikamente sehr empfohlen', icon: '💊💊', bgColor: '#ffe0b2' },
   hoch: { text: 'Medikamente dringend empfohlen', icon: '💊💊💊', bgColor: '#ffcdd2' },

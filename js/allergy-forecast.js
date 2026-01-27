@@ -5,7 +5,6 @@ const allergyForecastState = {
   lon: null,
   currentDays: 7,
   maxDays: 16,
-  apiSource: null,  // 'dwd' or 'open-meteo'
   detailView: false,
   selectedDayData: null
 };
@@ -33,33 +32,37 @@ async function showAllergyForecast(lat, lon) {
 
 async function fetchAndStoreAllergyData(lat, lon) {
   try {
-    // Try DWD first for better coverage (has hazelnut, ash, rye)
-    try {
-      const dwdForecast = await getDWDPollenForecast(lat, lon, 3);
-      if (dwdForecast && dwdForecast.length > 0) {
-        console.log('Using DWD pollen forecast');
-        allergyForecastState.hourlyData = { isDWD: true, forecast: dwdForecast };
-        allergyForecastState.lat = lat;
-        allergyForecastState.lon = lon;
-        allergyForecastState.apiSource = 'dwd';
-        allergyForecastState.maxDays = 3;  // DWD only provides 3 days
-        allergyForecastState.currentDays = 3;  // Show all available days
-        return allergyForecastState.hourlyData;
-      }
-    } catch(e) {
-      console.warn('DWD forecast failed, trying Open-Meteo:', e);
-    }
+    // Fetch both sources in parallel
+    const [dwdResult, openMeteoResult] = await Promise.allSettled([
+      getDWDPollenForecast(lat, lon, 3),
+      (async () => {
+        const url = APIS.openMeteoPollen(lat, lon);
+        return await getCachedFetch(url);
+      })()
+    ]);
     
-    // Fallback to Open-Meteo
-    const url = APIS.openMeteoPollen(lat, lon);
-    const data = await getCachedFetch(url);
-    allergyForecastState.hourlyData = data;
+    const dwdForecast = dwdResult.status === 'fulfilled' && dwdResult.value?.length > 0 ? dwdResult.value : null;
+    const openMeteoData = openMeteoResult.status === 'fulfilled' && openMeteoResult.value ? openMeteoResult.value : null;
+    
+    // Store both sources
+    allergyForecastState.hourlyData = {
+      dwd: dwdForecast,
+      openMeteo: openMeteoData
+    };
     allergyForecastState.lat = lat;
     allergyForecastState.lon = lon;
-    allergyForecastState.apiSource = 'open-meteo';
-    allergyForecastState.maxDays = 16;  // Open-Meteo provides up to 16 days
-    allergyForecastState.currentDays = 7;  // Start with 7 days
-    return data;
+    
+    // Determine max days based on available sources
+    if (openMeteoData) {
+      allergyForecastState.maxDays = 16;  // Open-Meteo provides up to 16 days
+      allergyForecastState.currentDays = 7;
+    } else if (dwdForecast) {
+      allergyForecastState.maxDays = 3;   // DWD only provides 3 days
+      allergyForecastState.currentDays = 3;
+    }
+    
+    console.log('Fetched dual source data - DWD:', !!dwdForecast, 'Open-Meteo:', !!openMeteoData);
+    return allergyForecastState.hourlyData;
   } catch(e) {
     console.error('Failed to fetch allergy forecast data:', e);
     return null;
@@ -67,7 +70,89 @@ async function fetchAndStoreAllergyData(lat, lon) {
 }
 
 function aggregateDailyPollen(hourlyData, days) {
-  // Handle DWD data format
+  // Handle dual source data
+  if (hourlyData?.dwd || hourlyData?.openMeteo) {
+    const dwdForecast = hourlyData.dwd;
+    const openMeteoData = hourlyData.openMeteo;
+    
+    const dailyData = [];
+    
+    // Process each day up to the max days available
+    for (let day = 0; day < days; day++) {
+      const now = new Date();
+      const dateStr = new Date(now.getTime() + day * 86400000).toISOString().split('T')[0];
+      
+      // Get DWD data for this day
+      let dwdDayData = null;
+      if (dwdForecast && day < dwdForecast.length) {
+        dwdDayData = dwdForecast[day];
+      }
+      
+      // Get Open-Meteo data for this day
+      let openMeteoDayData = null;
+      if (openMeteoData?.hourly?.time) {
+        const startOfDay = new Date(dateStr + 'T00:00:00Z');
+        const endOfDay = new Date(dateStr + 'T23:59:59Z');
+        
+        const values = { alder: 0, birch: 0, grass: 0, mugwort: 0, ragweed: 0, olive: 0 };
+        
+        openMeteoData.hourly.time.forEach((timeStr, i) => {
+          const time = new Date(timeStr);
+          if (time >= startOfDay && time <= endOfDay) {
+            if (openMeteoData.hourly.alder_pollen?.[i]) values.alder = Math.max(values.alder, openMeteoData.hourly.alder_pollen[i]);
+            if (openMeteoData.hourly.birch_pollen?.[i]) values.birch = Math.max(values.birch, openMeteoData.hourly.birch_pollen[i]);
+            if (openMeteoData.hourly.grass_pollen?.[i]) values.grass = Math.max(values.grass, openMeteoData.hourly.grass_pollen[i]);
+            if (openMeteoData.hourly.mugwort_pollen?.[i]) values.mugwort = Math.max(values.mugwort, openMeteoData.hourly.mugwort_pollen[i]);
+            if (openMeteoData.hourly.ragweed_pollen?.[i]) values.ragweed = Math.max(values.ragweed, openMeteoData.hourly.ragweed_pollen[i]);
+            if (openMeteoData.hourly.olive_pollen?.[i]) values.olive = Math.max(values.olive, openMeteoData.hourly.olive_pollen[i]);
+          }
+        });
+        
+        const sorted = Object.entries(values).sort(([,a], [,b]) => b - a);
+        const maxVal = sorted[0]?.[1] || 0;
+        const domTypes = sorted.filter(([,v]) => v > 0).slice(0, 3).map(([k]) => POLLEN_NAMES[k] || k);
+        const level = getPollenLevelFromValue(maxVal);
+        
+        openMeteoDayData = { level, types: domTypes, maxVal, values };
+      }
+      
+      // Determine combined level based on max from both sources
+      let combinedLevel = 'keine';
+      let combinedMaxVal = 0;
+      const combinedTypes = new Set();
+      
+      if (dwdDayData) {
+        if (dwdDayData.maxVal > combinedMaxVal) {
+          combinedMaxVal = dwdDayData.maxVal;
+          combinedLevel = dwdDayData.level;
+        }
+        dwdDayData.types.forEach(t => combinedTypes.add(t));
+      }
+      
+      if (openMeteoDayData) {
+        if (openMeteoDayData.maxVal > combinedMaxVal) {
+          combinedMaxVal = openMeteoDayData.maxVal;
+          combinedLevel = openMeteoDayData.level;
+        }
+        openMeteoDayData.types.forEach(t => combinedTypes.add(t));
+      }
+      
+      dailyData.push({
+        date: dateStr,
+        level: POLLEN_LEVELS[combinedLevel] || combinedLevel,
+        types: Array.from(combinedTypes).slice(0, 5),
+        maxVal: combinedMaxVal,
+        sources: {
+          dwd: dwdDayData,
+          openMeteo: openMeteoDayData
+        }
+      });
+    }
+    
+    return dailyData;
+  }
+  
+  // Handle legacy DWD data format
   if (hourlyData?.isDWD && hourlyData?.forecast) {
     return hourlyData.forecast.slice(0, days).map(day => ({
       date: day.date,
@@ -77,63 +162,7 @@ function aggregateDailyPollen(hourlyData, days) {
     }));
   }
   
-  // Handle Open-Meteo data format
-  if(!hourlyData || !hourlyData.hourly || !hourlyData.hourly.time) {
-    console.error('Invalid hourly data structure:', hourlyData);
-    return [];
-  }
-  
-  const now = new Date();
-  const dailyData = [];
-  
-  for(let day = 0; day < days; day++) {
-    const dateStr = new Date(now.getTime() + day * 86400000).toISOString().split('T')[0];
-    const startOfDay = new Date(dateStr + 'T00:00:00Z');
-    const endOfDay = new Date(dateStr + 'T23:59:59Z');
-    
-    // Find max pollen values for this day
-    const maxPollen = {
-      alder: 0,
-      birch: 0,
-      grass: 0,
-      mugwort: 0,
-      ragweed: 0,
-      olive: 0
-    };
-    
-    Object.keys(maxPollen).forEach(pollen => {
-      const key = pollen + '_pollen';
-      if(hourlyData.hourly[key] && Array.isArray(hourlyData.hourly[key])) {
-        hourlyData.hourly[key].forEach((val, i) => {
-          const timeStr = hourlyData.hourly.time?.[i];
-          if(!timeStr) return;
-          const time = new Date(timeStr);
-          if(time >= startOfDay && time <= endOfDay && val !== null) {
-            maxPollen[pollen] = Math.max(maxPollen[pollen], val);
-          }
-        });
-      }
-    });
-    
-    // Find top pollen types
-    const sorted = Object.entries(maxPollen).sort(([,a], [,b]) => b - a);
-    const types = sorted
-      .filter(([,v]) => v > 0)
-      .slice(0, 2)
-      .map(([k]) => POLLEN_NAMES[k] || k);
-    
-    // Find max pollen value for level
-    const maxVal = sorted[0]?.[1] || 0;
-    
-    dailyData.push({
-      date: dateStr,
-      level: getPollenLevelText(maxVal),
-      types: types.length > 0 ? types : ['Keine'],
-      maxVal: maxVal
-    });
-  }
-  
-  return dailyData;
+  return [];
 }
 
 async function renderAllergyForecastDays() {
@@ -150,14 +179,8 @@ async function renderAllergyForecastDays() {
       const dayName = dateObj.toLocaleDateString('de-DE', {weekday: 'long'});
       const dayDate = dateObj.toLocaleDateString('de-DE', {month: 'numeric', day: 'numeric'});
       
-      // Get level key from the level text (e.g., "Keine ✓" -> "keine")
-      let levelKey = 'keine';
-      if(day.maxVal === 0) levelKey = 'keine';
-      else if(day.maxVal <= 10) levelKey = 'sehr_niedrig';
-      else if(day.maxVal <= 30) levelKey = 'niedrig';
-      else if(day.maxVal <= 80) levelKey = 'mäßig';
-      else if(day.maxVal <= 150) levelKey = 'hoch';
-      else levelKey = 'sehr_hoch';
+      // Get level key from the level text
+      const levelKey = getPollenLevelFromValue(day.maxVal);
       
       const meds = getMedicationRecommendation(levelKey);
       
@@ -209,59 +232,18 @@ async function loadMoreAllergyDays() {
 function showDayPollenDetail(dateStr, dayName, dayDate) {
   if(!allergyForecastState.hourlyData) return;
   
-  // Handle DWD data
-  if (allergyForecastState.hourlyData.isDWD) {
-    const dayData = allergyForecastState.hourlyData.forecast.find(d => d.date === dateStr);
-    if (!dayData || !dayData.allPollen) return;
-    
-    allergyForecastState.detailView = true;
-    allergyForecastState.selectedDayData = {
-      dateStr,
-      dayName,
-      dayDate,
-      pollenData: dayData.allPollen,
-      isDWD: true
-    };
-    
-    renderDayPollenDetail();
-    return;
-  }
+  // Find the day's data from the aggregated dailyData
+  const dailyData = aggregateDailyPollen(allergyForecastState.hourlyData, allergyForecastState.currentDays);
+  const dayData = dailyData.find(d => d.date === dateStr);
   
-  // Handle Open-Meteo data
-  const startOfDay = new Date(dateStr + 'T00:00:00Z');
-  const endOfDay = new Date(dateStr + 'T23:59:59Z');
-  
-  // Get all pollen values for this day
-  const pollenData = {
-    alder: 0,
-    birch: 0,
-    grass: 0,
-    mugwort: 0,
-    olive: 0,
-    ragweed: 0
-  };
-  
-  Object.keys(pollenData).forEach(pollen => {
-    const key = pollen + '_pollen';
-    if(allergyForecastState.hourlyData.hourly[key]) {
-      allergyForecastState.hourlyData.hourly[key].forEach((val, i) => {
-        const timeStr = allergyForecastState.hourlyData.hourly.time?.[i];
-        if(!timeStr) return;
-        const time = new Date(timeStr);
-        if(time >= startOfDay && time <= endOfDay && val !== null) {
-          pollenData[pollen] = Math.max(pollenData[pollen], val);
-        }
-      });
-    }
-  });
+  if (!dayData || !dayData.sources) return;
   
   allergyForecastState.detailView = true;
-  allergyForecastState.selectedDayData = { 
-    dateStr, 
-    dayName, 
-    dayDate, 
-    pollenData,
-    isDWD: false  // Mark as Open-Meteo data
+  allergyForecastState.selectedDayData = {
+    dateStr,
+    dayName,
+    dayDate,
+    sources: dayData.sources  // Contains both DWD and Open-Meteo data
   };
   
   renderDayPollenDetail();
@@ -269,60 +251,95 @@ function showDayPollenDetail(dateStr, dayName, dayDate) {
 
 function renderDayPollenDetail() {
   const data = allergyForecastState.selectedDayData;
-  if(!data) return;
+  if(!data || !data.sources) return;
   
   el('forecastTitle').textContent = `Pollendetails · ${data.dayName} ${data.dayDate}`;
   el('forecastBack').style.display = 'flex';
   el('forecastFooter').style.display = 'none';
   
-  // Determine which pollen names to use
-  const pollenNames = data.isDWD ? DWD_POLLEN_NAMES : POLLEN_NAMES;
+  const dwdData = data.sources.dwd;
+  const openMeteoData = data.sources.openMeteo;
   
-  // Get all pollen types to display (use all available types from API)
-  const allPollenTypes = data.isDWD 
-    ? Object.keys(DWD_POLLEN_NAMES)  // All 8 DWD types
-    : Object.keys(POLLEN_NAMES);     // All 6 Open-Meteo types
+  // Collect all pollen types from both sources
+  const allPollenTypes = new Set();
   
-  // Build complete data object with all types (fill in missing ones with 0)
-  const completeData = {};
-  allPollenTypes.forEach(type => {
-    completeData[type] = data.pollenData[type] || 0;
+  if (dwdData?.allPollen) {
+    Object.keys(dwdData.allPollen).forEach(type => allPollenTypes.add({ type, source: 'dwd' }));
+  }
+  
+  if (openMeteoData?.values) {
+    Object.keys(openMeteoData.values).forEach(type => allPollenTypes.add({ type, source: 'openMeteo' }));
+  }
+  
+  // Build unified list with data from both sources
+  const pollenList = [];
+  
+  // DWD pollen types
+  if (dwdData?.allPollen) {
+    Object.keys(DWD_POLLEN_NAMES).forEach(type => {
+      const value = dwdData.allPollen[type] || 0;
+      const existing = pollenList.find(p => p.germanName === DWD_POLLEN_NAMES[type]);
+      if (!existing) {
+        pollenList.push({
+          germanName: DWD_POLLEN_NAMES[type],
+          dwd: { value, level: getPollenLevelText(value) }
+        });
+      }
+    });
+  }
+  
+  // Open-Meteo pollen types
+  if (openMeteoData?.values) {
+    Object.keys(POLLEN_NAMES).forEach(type => {
+      const value = openMeteoData.values[type] || 0;
+      const germanName = POLLEN_NAMES[type];
+      const existing = pollenList.find(p => p.germanName === germanName);
+      if (existing) {
+        existing.openMeteo = { value, level: getPollenLevelText(value) };
+      } else {
+        pollenList.push({
+          germanName,
+          openMeteo: { value, level: getPollenLevelText(value) }
+        });
+      }
+    });
+  }
+  
+  // Sort by combined max value
+  pollenList.sort((a, b) => {
+    const aMax = Math.max(a.dwd?.value || 0, a.openMeteo?.value || 0);
+    const bMax = Math.max(b.dwd?.value || 0, b.openMeteo?.value || 0);
+    return bMax - aMax;
   });
   
-  // Sort pollen by value (show all types, even 0)
-  const sorted = Object.entries(completeData)
-    .map(([type, value]) => ({
-      type,
-      name: pollenNames[type] || type,
-      value,
-      levelText: getPollenLevelText(value)
-    }))
-    .sort((a, b) => b.value - a.value);
-  
-  const html = sorted.map(item => {
-    // Determine level key for coloring
-    let levelKey = 'keine';
-    if(item.value === 0) levelKey = 'keine';
-    else if(item.value <= 10) levelKey = 'sehr_niedrig';
-    else if(item.value <= 30) levelKey = 'niedrig';
-    else if(item.value <= 80) levelKey = 'mäßig';
-    else if(item.value <= 150) levelKey = 'hoch';
-    else levelKey = 'sehr_hoch';
+  // Render without bar charts - just show the values from each source
+  const html = pollenList.map(item => {
+    const maxValue = Math.max(item.dwd?.value || 0, item.openMeteo?.value || 0);
+    const levelKey = getPollenLevelFromValue(maxValue);
     
     const meds = getMedicationRecommendation(levelKey);
-    const barWidth = item.value > 0 ? Math.min((item.value / 200) * 100, 100) : 0;
     
     return `
       <div class="pollen-detail-item" style="padding:16px;border-bottom:1px solid rgba(180,198,216,0.2);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-weight:600;font-size:16px;">${item.name}</div>
-          <div style="font-size:12px;color:${meds.bgColor};background:${meds.bgColor};color:#333;padding:4px 8px;border-radius:4px;font-weight:600;">${item.levelText}</div>
+          <div style="font-weight:600;font-size:16px;">${item.germanName}</div>
+          <div style="font-size:12px;color:${meds.bgColor};background:${meds.bgColor};color:#333;padding:4px 8px;border-radius:4px;font-weight:600;">${getPollenLevelText(maxValue)}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="flex:1;height:12px;background:rgba(180,198,216,0.15);border-radius:6px;overflow:hidden;">
-            <div style="height:100%;background:${meds.bgColor};width:${barWidth}%;transition:width 0.3s;"></div>
-          </div>
-          <div style="font-size:12px;color:var(--muted);min-width:60px;text-align:right;">${item.value.toFixed(1)} gr/m³</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
+          ${item.dwd ? `
+            <div style="padding:8px;background:rgba(180,198,216,0.1);border-radius:6px;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">DWD</div>
+              <div style="font-size:14px;font-weight:600;">${item.dwd.value.toFixed(0)}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${item.dwd.level}</div>
+            </div>
+          ` : '<div style="padding:8px;background:rgba(180,198,216,0.05);border-radius:6px;color:var(--muted);font-size:12px;">N/A</div>'}
+          ${item.openMeteo ? `
+            <div style="padding:8px;background:rgba(180,198,216,0.1);border-radius:6px;">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Open-Meteo</div>
+              <div style="font-size:14px;font-weight:600;">${item.openMeteo.value.toFixed(1)} gr/m³</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${item.openMeteo.level}</div>
+            </div>
+          ` : '<div style="padding:8px;background:rgba(180,198,216,0.05);border-radius:6px;color:var(--muted);font-size:12px;">N/A</div>'}
         </div>
       </div>
     `;
