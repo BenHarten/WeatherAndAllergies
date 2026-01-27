@@ -53,10 +53,118 @@ git push origin main
 
 ## Local Testing
 
+### Without Python Server (Simple Static Testing)
 ```bash
+cd WeatherAndAllergies
 python3 -m http.server 8000
 # Then open http://localhost:8000 in your browser
+# Uses Open-Meteo only (no hazelnut pollen data)
 ```
+
+### With Python Proxy Server (Full DWD Support)
+```bash
+# Terminal 1: Start the Python proxy server
+cd WeatherAndAllergies
+python3 server.py
+# Server starts at http://localhost:8000
+# Proxies DWD pollen API at /api/dwd-pollen
+
+# The app will try DWD first, then fall back to Open-Meteo if needed
+```
+
+### GitHub Pages Deployment
+When deployed to GitHub Pages:
+- ✅ **Open-Meteo works**: Weather, pollen for 6 types (alder, birch, grass, mugwort, olive, ragweed)
+- ❌ **DWD unavailable by default**: Requires Python server (not supported on GitHub Pages static hosting)
+- **Fallback**: App automatically uses Open-Meteo when DWD proxy is unavailable
+- **Solution**: Deploy DWD proxy to Railway.app (see below for full DWD support on GitHub Pages)
+
+## Deploy DWD Proxy to Railway.app (Optional - Get Full 8 Pollen Types on GitHub Pages)
+
+To enable DWD pollen data (including hazelnut, ash, rye) on your GitHub Pages site, deploy the proxy server to Railway.app:
+
+### Step 1: Push Your Code to GitHub
+
+```bash
+cd WeatherAndAllergies
+git add .
+git commit -m "Add Railway configuration"
+git push origin main
+```
+
+### Step 2: Deploy to Railway.app
+
+1. **Sign up at Railway.app**
+   - Go to [railway.app](https://railway.app)
+   - Click "Login with GitHub"
+   - Authorize Railway to access your repositories
+
+2. **Create New Project**
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose your `WeatherAndAllergies` repository
+   - Click "Deploy Now"
+
+3. **Wait for Deployment** (~2 minutes)
+   - Railway will automatically detect the `Procfile`
+   - Watch the build logs in the dashboard
+   - Wait for "Success" status
+
+4. **Get Your Railway URL**
+   - Click on your deployment
+   - Go to "Settings" tab
+   - Click "Generate Domain" under "Networking"
+   - Copy the URL (e.g., `https://weatherandallergies-production.up.railway.app`)
+
+### Step 3: Update Your App Configuration
+
+1. **Open `js/api.js` in your repository**
+2. **Find line 14** and replace `'https://your-railway-app.up.railway.app'` with your actual Railway URL:
+
+```javascript
+DWD_PROXY_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? '' 
+  : 'https://weatherandallergies-production.up.railway.app'  // ← Your Railway URL here
+```
+
+3. **Commit and push**:
+```bash
+git add js/api.js
+git commit -m "Add Railway proxy URL"
+git push origin main
+```
+
+4. **Wait 1-2 minutes** for GitHub Pages to rebuild
+
+### Step 4: Test Your Deployment
+
+1. Open your GitHub Pages site
+2. Open browser console (F12)
+3. Look for: `✅ Using DWD pollen data`
+4. Check allergy forecast shows 8 pollen types (including Hasel/hazelnut)
+
+### Railway.app Cost & Limits
+
+- **Free tier**: $5/month credit (enough for this proxy)
+- **Usage**: Lightweight proxy uses ~$2-3/month
+- **Monitoring**: Railway shows usage in dashboard
+- **Billing**: Requires credit card but won't charge if under $5/month
+- **Auto-sleep**: No sleep on Railway (instant response always)
+
+### Troubleshooting Railway Deployment
+
+**Build fails?**
+- Check Railway logs for Python errors
+- Ensure `Procfile` and `runtime.txt` are in repository root
+
+**404 on /api/dwd-pollen?**
+- Verify Railway deployment shows "Active"
+- Check Railway logs for startup errors
+- Test directly: `https://your-app.up.railway.app/api/dwd-pollen`
+
+**CORS errors?**
+- Railway should handle CORS automatically (server.py has CORS headers)
+- If issues persist, check Railway logs for request details
 
 ## Mock Mode (Testing)
 
@@ -143,6 +251,16 @@ const MOCK_SCENARIOS = {
 To add a new scenario, just add a new object to `MOCK_SCENARIOS` with the same structure.
 
 ## API Details
+
+### DWD Pollen (Local Development Only)
+- **URL**: Via Python proxy at `/api/dwd-pollen` (proxies Deutscher Wetterdienst)
+- **Setup**: Requires `server.py` running locally
+- **Advantages**:
+  - ✓ 8 pollen types (includes **Hazelnut, Ash, Rye**)
+  - ✓ Germany-focused with regional data
+  - ✓ Detailed forecasts
+- **Limitation**: Cannot run on GitHub Pages (requires backend server)
+- **Documentation**: https://www.dwd.de
 
 ### Open-Meteo (Weather)
 

@@ -118,12 +118,13 @@ if __name__ == '__main__':
     # Change to the script directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
-    HOST = 'localhost'
-    PORT = 8000
+    # Use Railway's PORT environment variable or default to 8000 for local
+    PORT = int(os.environ.get('PORT', 8000))
+    HOST = '0.0.0.0'  # Railway requires 0.0.0.0 to accept external connections
     
     server = HTTPServer((HOST, PORT), ProxyHandler)
-    print(f"🌍 Server running at http://{HOST}:{PORT}")
-    print(f"📡 DWD Pollen API proxied at http://{HOST}:{PORT}/api/dwd-pollen")
+    print(f"🌍 Server running on port {PORT}")
+    print(f"📡 DWD Pollen API proxied at /api/dwd-pollen")
     print(f"📂 Serving files from {os.getcwd()}")
     print("Press Ctrl+C to stop")
     

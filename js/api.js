@@ -10,7 +10,12 @@ const CONFIG = {
   INITIAL_FORECAST_DAYS: 7,
   MAX_FORECAST_DAYS: 16,
   // API caching (30 minutes)
-  CACHE_TTL: 1800000
+  CACHE_TTL: 1800000,
+  // DWD Proxy URL - Railway deployment or local
+  // Replace with your Railway URL after deployment: 'https://your-app.up.railway.app'
+  DWD_PROXY_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? '' 
+    : 'https://your-railway-app.up.railway.app'
 };
 
 const APIS = {
