@@ -311,14 +311,14 @@ function renderDayPollenDetail() {
           ${item.dwd ? `
             <div style="padding:8px;background:rgba(180,198,216,0.1);border-radius:6px;">
               <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">DWD</div>
-              <div style="font-size:14px;font-weight:600;">${item.dwd.value.toFixed(0)}</div>
+              <div style="font-size:14px;font-weight:600;">${item.dwd.value.toFixed(0)}<span style="font-size:11px;color:#999;font-weight:400;">/150</span></div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px;">${item.dwd.level}</div>
             </div>
           ` : '<div style="padding:8px;background:rgba(180,198,216,0.05);border-radius:6px;color:var(--muted);font-size:12px;">N/A</div>'}
           ${item.openMeteo ? `
             <div style="padding:8px;background:rgba(180,198,216,0.1);border-radius:6px;">
               <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Open-Meteo</div>
-              <div style="font-size:14px;font-weight:600;">${item.openMeteo.value.toFixed(1)} gr/m³</div>
+              <div style="font-size:14px;font-weight:600;">${item.openMeteo.value.toFixed(1)}<span style="font-size:11px;color:#999;font-weight:400;">/150</span> gr/m³</div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px;">${item.openMeteo.level}</div>
             </div>
           ` : '<div style="padding:8px;background:rgba(180,198,216,0.05);border-radius:6px;color:var(--muted);font-size:12px;">N/A</div>'}
