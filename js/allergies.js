@@ -64,7 +64,7 @@ async function fetchOpenMeteoPollen(lat, lon) {
   
   try {
     const data = await getCachedFetch(url);
-    if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar']};
+    if(!data.hourly) return {level: null, types: ['Keine Daten verfügbar'], values: {}};
 
     // Get today's date range
     const now = new Date();

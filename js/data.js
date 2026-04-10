@@ -98,7 +98,9 @@ const POLLEN_LEVEL_NUMBERS = {
   keine: 0, sehr_niedrig: 1, niedrig: 2, mäßig: 3, hoch: 4, sehr_hoch: 5
 };
 
-// Bar gradient and label color per level number
+// Bar gradient and label color per level number (1-5).
+// Level 0 ('keine') is intentionally absent: renderAllergy() filters out values <= 0
+// before reaching this lookup, so level 0 bars are never rendered.
 const POLLEN_BAR_STYLES = {
   1: { gradient: '#4ade80',                                   color: '#4ade80' },
   2: { gradient: 'linear-gradient(90deg,#4ade80,#a3e635)',    color: '#a3e635' },
