@@ -1,24 +1,20 @@
 // ============ WEATHER (OPEN-METEO) ============
-function degreeToCompass(degrees) {
-  const directions = ['N', 'NNO', 'NO', 'ONO', 'O', 'OSO', 'SO', 'SSO', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  const index = Math.round(degrees / 22.5) % 16;
-  return directions[index];
-}
-
 function renderWeather(data, label) {
   const cur = data.current_weather;
   const code = cur.weathercode;
   const icon = WEATHER_ICONS[code] || '❓';
-  const windDirection = degreeToCompass(cur.winddirection);
-  
+  const description = WEATHER_CODES[code] || '';
+
   const leftHTML = `
     <div class="weather-icon">${icon}</div>
   `;
-  
+
   const rightHTML = `
     <div class="weather-temp">${Math.round(cur.temperature)}°C</div>
-    <div class="weather-wind">Wind ${Math.round(cur.windspeed)} km/h</div>
+    <div class="weather-condition">${description}</div>
+    <div class="weather-wind">💨 ${Math.round(cur.windspeed)} km/h</div>
   `;
-  
+
   renderCard('weatherContent', leftHTML, rightHTML, 'weather');
+  el('weatherContent').insertAdjacentHTML('beforeend', '<div class="card-hint">Tippen für Vorhersage →</div>');
 }
