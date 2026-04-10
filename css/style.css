@@ -122,3 +122,29 @@ button:disabled{opacity:0.5;cursor:not-allowed}
   .card{padding:14px}
   .card h2{font-size:16px}
 }
+
+/* Pollen bar card */
+.pollen-bars{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.pollen-bar-row{display:flex;align-items:center;gap:8px}
+.pollen-bar-name{font-size:12px;width:46px;flex-shrink:0;color:var(--text)}
+.pollen-bar-track{flex:1;height:7px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden}
+.pollen-bar-fill{height:100%;border-radius:99px}
+.pollen-bar-label{font-size:11px;width:22px;text-align:right;font-weight:700}
+.pollen-overflow{font-size:11px;color:var(--muted);margin-bottom:8px}
+.pollen-none{font-size:13px;color:var(--muted);margin-bottom:10px}
+.pollen-med-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;color:#333}
+
+/* Card hint */
+.card-hint{margin-top:8px;font-size:11px;color:rgba(182,194,216,0.4)}
+
+/* Loading skeletons */
+@keyframes skeleton-pulse{0%,100%{opacity:.35}50%{opacity:.7}}
+.skeleton{animation:skeleton-pulse 1.2s ease-in-out infinite;background:rgba(255,255,255,0.08);border-radius:6px}
+.skeleton-weather{display:flex;align-items:center;gap:16px}
+.skeleton-circle{width:52px;height:52px;border-radius:50%;flex-shrink:0}
+.skeleton-lines{display:flex;flex-direction:column;gap:8px}
+.skeleton-line{height:14px;border-radius:4px}
+.skeleton-pollen{display:flex;flex-direction:column;gap:8px}
+.skeleton-bar-row{display:flex;align-items:center;gap:8px}
+.skeleton-bar-name{width:46px;height:10px;flex-shrink:0;border-radius:4px}
+.skeleton-bar-track{flex:1;height:7px;border-radius:99px}
