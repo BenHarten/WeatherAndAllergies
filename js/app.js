@@ -13,8 +13,24 @@ async function loadForLocation(lat, lon, label) {
   state.currentLocationName = label;
   
   el('locationTitle').textContent = label;
-  el('weatherContent').innerHTML = `<p class="muted">Lade Wetter…</p>`;
-  el('allergyContent').innerHTML = `<p class="muted">Lade Polleninformationen…</p>`;
+  el('weatherContent').innerHTML = `
+    <div class="skeleton-weather">
+      <div class="skeleton skeleton-circle"></div>
+      <div class="skeleton-lines">
+        <div class="skeleton skeleton-line" style="width:80px;height:32px;"></div>
+        <div class="skeleton skeleton-line" style="width:100px;margin-top:4px;"></div>
+        <div class="skeleton skeleton-line" style="width:70px;margin-top:4px;"></div>
+      </div>
+    </div>`;
+  el('allergyContent').innerHTML = `
+    <div class="skeleton-pollen">
+      ${[0,1,2].map(() => `
+        <div class="skeleton-bar-row">
+          <div class="skeleton skeleton-bar-name"></div>
+          <div class="skeleton skeleton-bar-track"></div>
+        </div>`).join('')}
+      <div class="skeleton skeleton-line" style="width:160px;margin-top:10px;height:28px;border-radius:6px;"></div>
+    </div>`;
 
   // Load weather and pollen in parallel instead of sequentially
   try {
