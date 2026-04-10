@@ -13,12 +13,28 @@ const DWD_POLLEN_NAMES = {
   'Ambrosia': 'Ambrosia'
 };
 
-const DWD_REGIONS = {
-  // Map coordinates to region IDs
-  // Berlin region
-  'berlin': { region_id: 50, region_name: 'Brandenburg und Berlin' },
-  // Add more regions as needed
-};
+// Approximate centroids for all DWD pollen regions
+// Used for nearest-region lookup when exact bounding box match fails
+const DWD_REGION_CENTROIDS = [
+  { region_id: 10,  partregion_id: -1,  lat: 54.0, lon: 10.0  }, // Schleswig-Holstein und Hamburg
+  { region_id: 20,  partregion_id: -1,  lat: 53.8, lon: 12.5  }, // Mecklenburg-Vorpommern
+  { region_id: 30,  partregion_id: -1,  lat: 52.6, lon:  9.5  }, // Niedersachsen und Bremen
+  { region_id: 40,  partregion_id: 41,  lat: 51.8, lon:  7.5  }, // NRW Nord
+  { region_id: 40,  partregion_id: 42,  lat: 51.0, lon:  7.2  }, // NRW Süd
+  { region_id: 50,  partregion_id: -1,  lat: 52.5, lon: 13.4  }, // Brandenburg und Berlin
+  { region_id: 60,  partregion_id: -1,  lat: 51.9, lon: 11.5  }, // Sachsen-Anhalt
+  { region_id: 70,  partregion_id: -1,  lat: 51.0, lon: 11.0  }, // Thüringen
+  { region_id: 80,  partregion_id: -1,  lat: 51.1, lon: 13.3  }, // Sachsen
+  { region_id: 90,  partregion_id: -1,  lat: 49.8, lon: 11.0  }, // Bayern Nord
+  { region_id: 90,  partregion_id: 91,  lat: 49.5, lon: 12.5  }, // Bayern Nordost
+  { region_id: 100, partregion_id: -1,  lat: 48.1, lon: 11.5  }, // Bayern Süd
+  { region_id: 100, partregion_id: 101, lat: 47.6, lon: 11.0  }, // Bayern Alpen
+  { region_id: 110, partregion_id: 111, lat: 49.2, lon:  8.8  }, // Baden-Württemberg Nord
+  { region_id: 110, partregion_id: 112, lat: 48.1, lon:  8.5  }, // Baden-Württemberg Süd
+  { region_id: 120, partregion_id: -1,  lat: 48.8, lon: 11.5  }, // Bayern gesamt
+  { region_id: 130, partregion_id: -1,  lat: 49.8, lon:  7.5  }, // Saarland und Rheinland-Pfalz
+  { region_id: 140, partregion_id: -1,  lat: 50.6, lon:  9.0  }, // Hessen
+];
 
 // Convert DWD level (0, 0-1, 1, 1-2, 2, 2-3, 3) to numeric value
 // Scale to match Open-Meteo's range for visual consistency
@@ -34,36 +50,26 @@ function dwdLevelToNumber(level) {
   return 0;
 }
 
-// Find closest region for given coordinates
+// Find the closest DWD region to given coordinates using Euclidean distance
 function findDWDRegion(lat, lon, data) {
-  // For now, simple region matching
-  // Berlin/Brandenburg region
-  if (lat >= 51.5 && lat <= 53.5 && lon >= 12.0 && lon <= 14.5) {
-    return data.content.find(r => r.region_id === 50);
-  }
-  
-  // NRW
-  if (lat >= 50.3 && lat <= 52.5 && lon >= 6.0 && lon <= 9.5) {
-    return data.content.find(r => r.region_id === 40 && r.partregion_id === 41);
-  }
-  
-  // Bavaria
-  if (lat >= 47.2 && lat <= 50.5 && lon >= 9.0 && lon <= 13.8) {
-    return data.content.find(r => r.region_id === 120);
-  }
-  
-  // Baden-Württemberg (Stuttgart area)
-  if (lat >= 47.5 && lat <= 49.8 && lon >= 7.5 && lon <= 10.5) {
-    return data.content.find(r => r.region_id === 110 && r.partregion_id === 112);
-  }
-  
-  // Hamburg/Schleswig-Holstein
-  if (lat >= 53.4 && lat <= 55.1 && lon >= 8.5 && lon <= 11.5) {
-    return data.content.find(r => r.region_id === 10);
-  }
-  
-  // Default to first region if no match
-  return data.content[0];
+  let bestRegion = null;
+  let bestDist = Infinity;
+
+  DWD_REGION_CENTROIDS.forEach(centroid => {
+    const dist = Math.pow(lat - centroid.lat, 2) + Math.pow(lon - centroid.lon, 2);
+    if (dist >= bestDist) return;
+
+    const match = data.content.find(r =>
+      r.region_id === centroid.region_id &&
+      (centroid.partregion_id === -1 || r.partregion_id === centroid.partregion_id)
+    );
+    if (match) {
+      bestDist = dist;
+      bestRegion = match;
+    }
+  });
+
+  return bestRegion || data.content[0];
 }
 
 // Fetch DWD pollen data
