@@ -147,49 +147,92 @@ function aggregateDailyPollen(hourlyData, days) {
   return [];
 }
 
+// Build a map of German pollen name → { combined, dwd, openMeteo, inDwd, inOpenMeteo }
+// Used by both the daily list and per-day detail renderers
+function buildDayPollenValues(dwdAllPollen, openMeteoValues) {
+  const result = {};
+
+  Object.entries(DWD_POLLEN_NAMES).forEach(([key, germanName]) => {
+    result[germanName] = result[germanName] || { combined: 0, dwd: 0, openMeteo: 0, inDwd: false, inOpenMeteo: false };
+    result[germanName].inDwd = true;
+    const value = dwdAllPollen?.[key] || 0;
+    result[germanName].dwd = value;
+    result[germanName].combined = Math.max(result[germanName].combined, value);
+  });
+
+  Object.entries(POLLEN_NAMES).forEach(([key, germanName]) => {
+    result[germanName] = result[germanName] || { combined: 0, dwd: 0, openMeteo: 0, inDwd: false, inOpenMeteo: false };
+    result[germanName].inOpenMeteo = true;
+    const value = openMeteoValues?.[key] || 0;
+    result[germanName].openMeteo = value;
+    result[germanName].combined = Math.max(result[germanName].combined, value);
+  });
+
+  return result;
+}
+
 async function renderAllergyForecastDays() {
   try {
     if(!allergyForecastState.hourlyData) {
       el('forecastGrid').innerHTML = '<p class="muted" style="padding:20px;text-align:center">Pollenvorhersage nicht verfügbar</p>';
       return;
     }
-    
+
     const dailyData = aggregateDailyPollen(allergyForecastState.hourlyData, allergyForecastState.currentDays);
-    
-    const html = dailyData.map((day, idx) => {
+
+    const html = dailyData.map(day => {
       const dateObj = new Date(day.date);
       const dayName = dateObj.toLocaleDateString('de-DE', {weekday: 'long'});
       const dayDate = dateObj.toLocaleDateString('de-DE', {month: 'numeric', day: 'numeric'});
-      
-      // Get level key from the level text
-      const levelKey = getPollenLevelFromValue(day.maxVal);
-      
-      const meds = getMedicationRecommendation(levelKey);
-      
+
+      const pollenValues = buildDayPollenValues(day.sources?.dwd?.allPollen, day.sources?.openMeteo?.values);
+      const active = Object.entries(pollenValues)
+        .filter(([, v]) => v.combined > 0)
+        .sort(([, a], [, b]) => b.combined - a.combined);
+
+      let barsHTML;
+      if (active.length === 0) {
+        barsHTML = '<div class="pollen-none">Keine aktiven Pollen</div>';
+      } else {
+        const top3 = active.slice(0, 3);
+        const overflow = active.slice(3);
+
+        const rowsHTML = top3.map(([name, vals]) => {
+          const levelKey = getPollenLevelFromValue(vals.combined);
+          const levelNum = POLLEN_LEVEL_NUMBERS[levelKey];
+          const style = POLLEN_BAR_STYLES[levelNum] || POLLEN_BAR_STYLES[1];
+          const width = (levelNum / 5) * 100;
+          return `
+            <div class="pollen-bar-row">
+              <div class="pollen-bar-name">${name}</div>
+              <div class="pollen-bar-track">
+                <div class="pollen-bar-fill" style="width:${width}%;background:${style.gradient};"></div>
+              </div>
+              <div class="pollen-bar-label" style="color:${style.color};">${levelNum}/5</div>
+            </div>`;
+        }).join('');
+
+        const overflowHTML = overflow.length > 0
+          ? `<div class="pollen-overflow">+ ${overflow.length} weitere (${overflow.map(([n]) => n).join(', ')})</div>`
+          : '';
+
+        barsHTML = `<div class="pollen-bars">${rowsHTML}</div>${overflowHTML}`;
+      }
+
       return `
-        <div class="allergy-forecast-item" style="display:flex;cursor:pointer;" onclick="showDayPollenDetail('${day.date}', '${dayName}', '${dayDate}')">
-          <div class="allergy-forecast-left" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding-right:12px;max-width:50%;">
-            <div class="allergy-forecast-date" style="width:100%;text-align:center;">${dayName} · ${dayDate}</div>
-            <div style="font-size:9px;color:#333;font-weight:600;text-align:center;background-color:${meds.bgColor};padding:3px 6px;border-radius:3px;word-wrap:break-word;line-height:1.2;max-width:70%;">${meds.text}</div>
-          </div>
-          <div class="allergy-forecast-right" style="flex:1;padding-left:12px;">
-            <div class="allergy-forecast-level">${day.level}</div>
-            <div class="allergy-forecast-types">${day.types.join(', ')}</div>
-          </div>
-        </div>
-      `;
+        <div class="allergy-forecast-item" onclick="showDayPollenDetail('${day.date}', '${dayName}', '${dayDate}')">
+          <div class="allergy-forecast-date">${dayName} · ${dayDate}</div>
+          ${barsHTML}
+        </div>`;
     }).join('');
-    
+
     el('forecastGrid').innerHTML = html;
-    
-    // Update footer based on API source and available days
-    if (allergyForecastState.apiSource === 'dwd') {
-      // DWD only has 3 days max
+
+    if(allergyForecastState.currentDays >= allergyForecastState.maxDays) {
       el('forecastLoadMore').disabled = true;
-      el('forecastLoadMore').textContent = 'DWD: Maximal 3 Tage verfügbar';
-    } else if(allergyForecastState.currentDays >= allergyForecastState.maxDays) {
-      el('forecastLoadMore').disabled = true;
-      el('forecastLoadMore').textContent = 'Maximale Tage erreicht (16)';
+      el('forecastLoadMore').textContent = allergyForecastState.maxDays <= 3
+        ? 'DWD: Maximal 3 Tage verfügbar'
+        : 'Maximale Tage erreicht (16)';
     } else {
       el('forecastLoadMore').disabled = false;
       el('forecastLoadMore').textContent = `Weitere Tage laden (+${Math.min(7, allergyForecastState.maxDays - allergyForecastState.currentDays)})`;
@@ -234,101 +277,56 @@ function showDayPollenDetail(dateStr, dayName, dayDate) {
 function renderDayPollenDetail() {
   const data = allergyForecastState.selectedDayData;
   if(!data || !data.sources) return;
-  
+
   el('forecastTitle').textContent = `Pollendetails · ${data.dayName} ${data.dayDate}`;
   el('forecastBack').style.display = 'flex';
   el('forecastFooter').style.display = 'none';
-  
-  const dwdData = data.sources.dwd;
-  const openMeteoData = data.sources.openMeteo;
-  
-  // Collect all pollen types from both sources
-  const allPollenTypes = new Set();
-  
-  if (dwdData?.allPollen) {
-    Object.keys(dwdData.allPollen).forEach(type => allPollenTypes.add({ type, source: 'dwd' }));
+
+  const pollenValues = buildDayPollenValues(data.sources.dwd?.allPollen, data.sources.openMeteo?.values);
+
+  const sorted = Object.entries(pollenValues)
+    .filter(([, v]) => v.combined > 0)
+    .sort(([, a], [, b]) => b.combined - a.combined);
+
+  if (sorted.length === 0) {
+    el('forecastGrid').innerHTML = '<div class="pollen-none" style="padding:20px;text-align:center">Keine aktiven Pollen für diesen Tag</div>';
+    const modalContent = el('forecastModal').querySelector('.forecast-modal-content');
+    modalContent.scrollTop = 0;
+    return;
   }
-  
-  if (openMeteoData?.values) {
-    Object.keys(openMeteoData.values).forEach(type => allPollenTypes.add({ type, source: 'openMeteo' }));
-  }
-  
-  // Build unified list with data from both sources
-  const pollenList = [];
-  
-  // DWD pollen types
-  if (dwdData?.allPollen) {
-    Object.keys(DWD_POLLEN_NAMES).forEach(type => {
-      const value = dwdData.allPollen[type] || 0;
-      const existing = pollenList.find(p => p.germanName === DWD_POLLEN_NAMES[type]);
-      if (!existing) {
-        pollenList.push({
-          germanName: DWD_POLLEN_NAMES[type],
-          dwd: { value, level: getPollenLevelText(value) }
-        });
-      }
-    });
-  }
-  
-  // Open-Meteo pollen types
-  if (openMeteoData?.values) {
-    Object.keys(POLLEN_NAMES).forEach(type => {
-      const value = openMeteoData.values[type] || 0;
-      const germanName = POLLEN_NAMES[type];
-      const existing = pollenList.find(p => p.germanName === germanName);
-      if (existing) {
-        existing.openMeteo = { value, level: getPollenLevelText(value) };
-      } else {
-        pollenList.push({
-          germanName,
-          openMeteo: { value, level: getPollenLevelText(value) }
-        });
-      }
-    });
-  }
-  
-  // Sort by combined max value
-  pollenList.sort((a, b) => {
-    const aMax = Math.max(a.dwd?.value || 0, a.openMeteo?.value || 0);
-    const bMax = Math.max(b.dwd?.value || 0, b.openMeteo?.value || 0);
-    return bMax - aMax;
-  });
-  
-  // Render without bar charts - just show the values from each source
-  const html = pollenList.map(item => {
-    const maxValue = Math.max(item.dwd?.value || 0, item.openMeteo?.value || 0);
-    const levelKey = getPollenLevelFromValue(maxValue);
-    
-    const meds = getMedicationRecommendation(levelKey);
-    
+
+  const html = sorted.map(([germanName, vals]) => {
+    const levelKey = getPollenLevelFromValue(vals.combined);
+    const levelNum = POLLEN_LEVEL_NUMBERS[levelKey];
+    const style = POLLEN_BAR_STYLES[levelNum] || POLLEN_BAR_STYLES[1];
+    const width = (levelNum / 5) * 100;
+
+    const noteParts = [];
+    if (vals.inDwd) {
+      const dwdLevelKey = getPollenLevelFromValue(vals.dwd);
+      noteParts.push(`DWD: ${dwdLevelKey.replace('_', ' ')}`);
+    }
+    if (vals.inOpenMeteo) {
+      const omLevelKey = getPollenLevelFromValue(vals.openMeteo);
+      noteParts.push(`Open-Meteo: ${omLevelKey.replace('_', ' ')}`);
+    }
+    const sourceNote = noteParts.join(' · ');
+
     return `
-      <div class="pollen-detail-item" style="padding:16px;border-bottom:1px solid rgba(180,198,216,0.2);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-weight:600;font-size:16px;">${item.germanName}</div>
-          <div style="font-size:12px;color:${meds.bgColor};background:${meds.bgColor};color:#333;padding:4px 8px;border-radius:4px;font-weight:600;">${getPollenLevelText(maxValue)}</div>
+      <div class="pollen-detail-item">
+        <div class="pollen-bar-row">
+          <div class="pollen-bar-name">${germanName}</div>
+          <div class="pollen-bar-track">
+            <div class="pollen-bar-fill" style="width:${width}%;background:${style.gradient};"></div>
+          </div>
+          <div class="pollen-bar-label" style="color:${style.color};">${levelNum}/5</div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
-          ${item.dwd ? `
-            <div style="padding:8px;background:rgba(180,198,216,0.1);border-radius:6px;">
-              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">DWD</div>
-              <div style="font-size:14px;font-weight:600;">${item.dwd.value.toFixed(0)}<span style="font-size:11px;color:#999;font-weight:400;">/150</span></div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${item.dwd.level}</div>
-            </div>
-          ` : '<div style="padding:8px;background:rgba(180,198,216,0.05);border-radius:6px;color:var(--muted);font-size:12px;">N/A</div>'}
-          ${item.openMeteo ? `
-            <div style="padding:8px;background:rgba(180,198,216,0.1);border-radius:6px;">
-              <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Open-Meteo</div>
-              <div style="font-size:14px;font-weight:600;">${item.openMeteo.value.toFixed(1)}<span style="font-size:11px;color:#999;font-weight:400;">/150</span> gr/m³</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${item.openMeteo.level}</div>
-            </div>
-          ` : '<div style="padding:8px;background:rgba(180,198,216,0.05);border-radius:6px;color:var(--muted);font-size:12px;">N/A</div>'}
-        </div>
-      </div>
-    `;
+        <div class="pollen-source-note">${sourceNote}</div>
+      </div>`;
   }).join('');
-  
+
   el('forecastGrid').innerHTML = html;
-  
+
   const modalContent = el('forecastModal').querySelector('.forecast-modal-content');
   modalContent.scrollTop = 0;
 }
