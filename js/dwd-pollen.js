@@ -74,10 +74,8 @@ function findDWDRegion(lat, lon, data) {
 
 // Fetch DWD pollen data
 async function fetchDWDPollen(lat, lon) {
-  // Use configured proxy server (Railway or local)
-  const baseUrl = CONFIG.DWD_PROXY_URL || '';
-  const url = `${baseUrl}/api/dwd-pollen`;
-  
+  const url = './data/dwd-pollen.json';
+
   try {
     const response = await fetch(url);
     if (!response.ok) {
