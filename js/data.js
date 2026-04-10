@@ -92,3 +92,17 @@ function getPollenLevelText(value) {
 function getMedicationRecommendation(level) {
   return MEDICATION_RECOMMENDATIONS[level] || MEDICATION_RECOMMENDATIONS['keine'];
 }
+
+// Maps pollen level key → integer 0-5 for bar width calculation
+const POLLEN_LEVEL_NUMBERS = {
+  keine: 0, sehr_niedrig: 1, niedrig: 2, mäßig: 3, hoch: 4, sehr_hoch: 5
+};
+
+// Bar gradient and label color per level number
+const POLLEN_BAR_STYLES = {
+  1: { gradient: '#4ade80',                                   color: '#4ade80' },
+  2: { gradient: 'linear-gradient(90deg,#4ade80,#a3e635)',    color: '#a3e635' },
+  3: { gradient: 'linear-gradient(90deg,#facc15,#f97316)',    color: '#facc15' },
+  4: { gradient: 'linear-gradient(90deg,#f97316,#ef4444)',    color: '#ef4444' },
+  5: { gradient: 'linear-gradient(90deg,#f97316,#ef4444)',    color: '#ef4444' }
+};
